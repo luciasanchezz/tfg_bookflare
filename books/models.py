@@ -4,6 +4,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
 from datetime import timedelta
 
+
 #1. usuario
 class CustomUser(AbstractUser):
     email = models.EmailField(max_length=200, unique=True)
@@ -37,7 +38,9 @@ class Biblioteca(models.Model):
 
 #3. libro digital (requisito 4: archivos digitales)
 class Libro(models.Model):
-    isbn = models.CharField(max_length=13, unique=True)
+    #usamos ISBN como clave primaria para evitar IDs innecesarios
+    isbn = models.CharField(max_length=13, primary_key=True)
+    
     titulo = models.CharField(max_length=200)
     autor = models.CharField(max_length=100)
     genero = models.CharField(max_length=50) #permitirá filtrar por categorías en el frontend
@@ -86,15 +89,20 @@ class Inventario(models.Model):
     @property
     def hay_stock(self):
         return self.licencias_ocupadas < self.licencias_totales
+    
+    #propiedad que devuelve cuántas licencias quedan disponibles
+    @property
+    def licencias_disponibles(self):
+        return self.licencias_totales - self.licencias_ocupadas
 
 
 #5. préstamo (requisito 3: caducidad automática y estados)
 class Prestamo(models.Model):
     #máquina de estados para controlar el ciclo de vida del préstamo
     class Estado(models.TextChoices):
-        ACTIVO = "ACTIVO", "Leyendo"           #usuario tiene acceso al archivo
-        FINALIZADO = "FINALIZADO", "Devuelto"  #usuario devolvió voluntariamente (libera licencia)
-        CADUCADO = "CADUCADO", "Caducado"      #sistema revocó acceso por tiempo (libera licencia)
+        ACTIVO = "ACTIVO", "Leyendo"           
+        FINALIZADO = "FINALIZADO", "Devuelto"  
+        CADUCADO = "CADUCADO", "Caducado"      
 
     usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="prestamos")
     inventario = models.ForeignKey(Inventario, on_delete=models.CASCADE, related_name="prestamos_activos")
@@ -116,13 +124,33 @@ class Prestamo(models.Model):
     def save(self, *args, **kwargs):
         #lógica de creación (solo si no tiene ID):
         if not self.id:
-            #1. establecer caducidad a 60 días
+            #1. verificar disponibilidad de licencias
+            if self.inventario.licencias_ocupadas >= self.inventario.licencias_totales:
+                raise ValueError("No hay licencias disponibles para este libro.")
+
+            #2. ocupar una licencia
+            self.inventario.licencias_ocupadas += 1
+            self.inventario.save()
+
+            #3. establecer caducidad a 60 días
             self.fecha_vencimiento = timezone.now() + timedelta(days=60)
-            #2. actualizar estadísticas del libro
+
+            #4. actualizar estadísticas del libro
             self.inventario.libro.visitas_totales += 1
             self.inventario.libro.save()
             
         super().save(*args, **kwargs)
+
+    #método para devolver manualmente el préstamo y liberar licencia
+    def devolver(self):
+        if self.estado == self.Estado.ACTIVO:
+            self.estado = self.Estado.FINALIZADO
+            self.fecha_devolucion = timezone.now()
+            self.save(update_fields=["estado", "fecha_devolucion"])
+
+            #liberar licencia
+            self.inventario.licencias_ocupadas = max(self.inventario.licencias_ocupadas - 1, 0)
+            self.inventario.save()
 
     @property
     def dias_restantes(self):
@@ -137,8 +165,12 @@ class Prestamo(models.Model):
 class Reseña(models.Model):
     usuario = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     libro = models.ForeignKey(Libro, on_delete=models.CASCADE, related_name="resenas")
+    
     #validadores aseguran que el rating esté estrictamente entre 1 y 5
-    rating = models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)])
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)]
+    )
+    
     comentario = models.TextField()
     creada_en = models.DateTimeField(auto_now_add=True)
 

@@ -443,3 +443,92 @@ a.rowbook--link:active {
 }
 
 
+
+
+
+/* ===== HOME SLIDER CLARO Y COHERENTE ===== */
+
+.genre-section {
+    margin-bottom: 60px;
+}
+
+.genre-title {
+    margin-bottom: 15px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    border-left: 4px solid var(--primary);
+    padding-left: 10px;
+}
+
+.slider {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    padding: 10px 0;
+    scroll-behavior: smooth;
+}
+
+.slider::-webkit-scrollbar {
+    height: 8px;
+}
+
+.slider::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+}
+
+/* TARJETA LIBRO */
+.book-card {
+    min-width: 180px;
+    text-decoration: none;
+    color: var(--text);
+    transition: transform 0.2s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-3px);
+}
+
+/* PORTADA */
+.book-cover {
+    height: 260px;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.book-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* SIN PORTADA */
+.no-cover {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    background: var(--bg);
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+/* INFO */
+.book-info {
+    margin-top: 8px;
+}
+
+.book-info h3 {
+    font-size: 0.95rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.book-info p {
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin: 0;
+}
