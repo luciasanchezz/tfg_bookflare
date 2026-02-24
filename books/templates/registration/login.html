@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Entrar | BookFlare{% endblock %}
+
+{% block content %}
+<div class="auth">
+    <div class="auth__card">
+        <h1 class="auth__title">Iniciar sesión</h1>
+        <p class="auth__subtitle">Accede a tu cuenta para gestionar tus préstamos y reseñas.</p>
+
+        {% if form.non_field_errors %}
+            <div class="alert alert--error">
+                {% for e in form.non_field_errors %}{{ e }}{% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="post" class="auth__form">
+            {% csrf_token %}
+
+            <div class="form">
+                <div class="field">
+                    <label for="{{ form.username.id_for_label }}">Usuario</label>
+                    {{ form.username }}
+                    {% for e in form.username.errors %}
+                        <div class="field__error">{{ e }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.password.id_for_label }}">Contraseña</label>
+                    {{ form.password }}
+                    {% for e in form.password.errors %}
+                        <div class="field__error">{{ e }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button class="btn btn--primary btn--block" type="submit">Entrar</button>
+        </form>
+
+        <p class="auth__footer">
+            ¿No tienes cuenta? <a class="link" href="{% url 'register' %}">Regístrate</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

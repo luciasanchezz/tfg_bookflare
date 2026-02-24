@@ -1,0 +1,88 @@
+/* principal: cabecera "Librería" + botón crear */
+.pagehead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.pagehead__title {
+    margin: 0;
+    font-size: 28px;
+}
+
+/* listado de libros */
+.list {
+    display: grid;
+    gap: 12px;
+}
+
+/* fila de libro */
+.rowbook {
+    display: grid;
+    grid-template-columns: 72px 1fr auto;
+    align-items: center;
+    gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+}
+
+/* portada */
+.rowbook__img img {
+    width: 72px;
+    height: 72px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    display: block;
+}
+
+.rowbook__placeholder {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    border: 1px dashed var(--border);
+    background: #fff;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.8rem;
+    padding: 6px;
+}
+
+/* info */
+.rowbook__title {
+    font-weight: 800;
+    font-size: 1rem;
+    margin-bottom: 4px;
+}
+
+.rowbook__meta {
+    line-height: 1.3;
+}
+
+/* acciones */
+.rowbook__actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* responsive: en móvil apila acciones debajo */
+@media (max-width: 520px) {
+    .rowbook {
+        grid-template-columns: 72px 1fr;
+        grid-template-rows: auto auto;
+    }
+
+    .rowbook__actions {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+}
+

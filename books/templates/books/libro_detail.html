@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ libro.titulo }} | BookFlare{% endblock %}
+
+{% block content %}
+<div class="detail">
+    <div class="detail__media">
+        {% if libro.portada %}
+            <img class="detail__img" src="{{ libro.portada.url }}" alt="Portada de {{ libro.titulo }}">
+        {% else %}
+            <div class="detail__placeholder">Sin portada</div>
+        {% endif %}
+    </div>
+
+    <div class="detail__info">
+        <h1 class="detail__title">{{ libro.titulo }}</h1>
+        <p class="muted">{{ libro.autor }} · {{ libro.genero }} · {{ libro.anio }}</p>
+
+        <div class="detail__meta">
+            <div class="muted small"><strong>ISBN:</strong> {{ libro.isbn }}</div>
+            <div class="muted small"><strong>Visitas:</strong> {{ libro.visitas_totales }}</div>
+        </div>
+
+        <h2 class="detail__h2">Descripción</h2>
+        {% if libro.descripcion %}
+            <p class="detail__desc">{{ libro.descripcion }}</p>
+        {% else %}
+            <p class="muted">Sin descripción disponible.</p>
+        {% endif %}
+
+        <div class="btns">
+            {% if user.is_authenticated and not user.es_bibliotecario %}
+
+                {% if prestamo_activo %}
+                    <a class="btn btn--primary"
+                    href="{% url 'leer_libro_por_libro' libro.pk %}"
+                    target="_blank">
+                    Leer
+                    </a>
+                {% else %}
+                    {% if inventario_id %}
+                        <a class="btn btn--success"
+                        href="{% url 'prestar_libro' inventario_id %}">
+                        Pedir préstamo
+                        </a>
+                    {% else %}
+                        <span class="muted small">No disponible en inventario (sin licencias asignadas).</span>
+                    {% endif %}
+                {% endif %}
+
+            {% endif %}
+
+            <a class="btn btn--outline" href="{% url 'principal' %}">Volver</a>
+        </div>
+
+
+    </div>
+</div>
+{% endblock %}

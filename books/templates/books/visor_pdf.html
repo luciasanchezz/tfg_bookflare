@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Leer | {{ libro.titulo }}{% endblock %}
+
+{% block content %}
+<div class="reader">
+    <div class="reader__head">
+        <div>
+            <h1 class="reader__title">{{ libro.titulo }}</h1>
+            <p class="muted">{{ libro.autor }} · {{ libro.genero }} · {{ libro.anio }}</p>
+        </div>
+
+        <a class="btn btn--outline btn--sm" href="{% url 'libro_detalle' libro.pk %}">Volver</a>
+    </div>
+
+    <div class="pdfwrap">
+        <iframe class="pdf" src="{{ pdf_url }}" title="PDF {{ libro.titulo }}"></iframe>
+    </div>
+</div>
+{% endblock %}

@@ -1,83 +1,97 @@
+{% extends "base.html" %}
 {% load static %}
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>BookFlare</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'books/css/estilos.css' %}">
-</head>
+{% block title %}Principal | BookFlare{% endblock %}
 
-<body>
-    <nav class="navbar navbar-expand-lg bg-body-tertiary border-bottom">
-        <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="#">BookFlare</a>
-            <button class="navbar-toggler" data-bs-toggle="collapse" data-bs-target="#nav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div id="nav" class="collapse navbar-collapse">
-                <ul class="navbar-nav me-auto">
-                <li class="nav-item"><a class="nav-link active" href="#">Inicio</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Catálogo</a></li>
-                <li class="nav-item"><a class="nav-link" href="#">Mi biblioteca</a></li>
-                </ul>
-                <div class="d-flex gap-2">
-                    <a class="btn btn-primary btn-sm">Registro</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+{% block content %}
 
-    <section class="hero container">
-        <h1>Bienvenido a <strong>BookFlare</strong></h1>
-        <p class="lead mb-4">Tu espacio para descubrir, organizar y valorar libros en línea.</p>
-        <a href="#" class="btn btn-light btn-lg me-2">Explorar catálogo</a>
-    </section>
+{% if user.is_authenticated and user.es_bibliotecario %}
+    <div class="pagehead">
+        <h1 class="pagehead__title">Librería</h1>
+        <a class="btn btn--success btn--sm" href="{% url 'libro_crear' %}">CREAR</a>
+    </div>
 
-    <!-- Sección de destacados -->
-    <section class="container my-5">
-        <h2 class="text-center mb-4">Libros más populares</h2>
-        <div class="row g-4">
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="card h-100">
-            <img src="https://m.media-amazon.com/images/I/910vMosts-L._UF1000,1000_QL80_.jpg" class="card-img-top" alt="Libro 1">
-            <div class="card-body">
-                <h5 class="card-title">Los pilares de la tierra</h5>
-                <p class="card-text text-muted">Ken Follet · Historia</p>
-                <a href="#" class="btn btn-outline-primary w-100">Ver más</a>
-            </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-4">
-            <div class="card h-100">
-            <img src="https://m.media-amazon.com/images/I/71sOSrd+JxL.jpg" class="card-img-top" alt="Libro 2">
-            <div class="card-body">
-                <h5 class="card-title">1984</h5>
-                <p class="card-text text-muted">George Orwell · Distopía</p>
-                <a href="#" class="btn btn-outline-primary w-100">Ver más</a>
-            </div>
-            </div>
-        </div>
-        <div class="col-12 col-sm-6 col-lg-4">
-                <div class="card h-100">
-                <img src="https://m.media-amazon.com/images/I/61FNcfZaXsL.jpg" class="card-img-top" alt="Libro 3">
-                    <div class="card-body">
-                        <h5 class="card-title">Memorias de una salvaje</h5>
-                        <p class="card-text text-muted">Bebi Fernandez · Crimen</p>
-                        <a href="#" class="btn btn-outline-primary w-100">Ver más</a>
+    <form class="filter" method="get" action="{% url 'filtrar_libros' %}">
+        <input class="filter__input" type="text" name="titulo" placeholder="Buscar por título" value="{{ request.GET.titulo|default:'' }}">
+        <input class="filter__input" type="text" name="genero" placeholder="Buscar por categoría (ej: Fantasía)" value="{{ request.GET.genero|default:'' }}">
+        <button class="btn btn--primary btn--sm" type="submit">Buscar</button>
+        <a class="btn btn--outline btn--sm" href="{% url 'principal' %}">Quitar</a>
+    </form>
+
+    {% if libros %}
+        <div class="list">
+            {% for libro in libros %}
+                <div class="rowbook">
+                    <div class="rowbook__img">
+                        {% if libro.portada %}
+                            <img src="{{ libro.portada.url }}" alt="Portada de {{ libro.titulo }}">
+                        {% else %}
+                            <div class="rowbook__placeholder">Sin portada</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="rowbook__info">
+                        <div class="rowbook__title">{{ libro.titulo }}</div>
+                        <div class="rowbook__meta muted small">
+                            Licencias: {{ libro.licencias_disponibles }} disponibles / {{ libro.licencias_totales }} totales
+                        </div>
+                    </div>
+
+                    <div class="rowbook__actions">
+                        <a class="btn btn--outline btn--sm" href="{% url 'libro_editar' libro.pk %}">Editar</a>
+                        <a class="btn btn--outline-danger btn--sm" href="{% url 'libro_eliminar' libro.pk %}">Eliminar</a>
                     </div>
                 </div>
+            {% endfor %}
         </div>
-        </div>
-    </section>
+    {% else %}
+        <p class="muted">No hay libros registrados.</p>
+    {% endif %}
 
-    <footer>
-        <div class="container">
-        <p>© 2025 BookFlare</p>
-        </div>
-    </footer>
+{% elif user.is_authenticated %}
+    <div class="pagehead">
+        <h1 class="pagehead__title">Catálogo</h1>
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <form class="filter" method="get" action="{% url 'catalogo' %}">
+        <input class="filter__input" type="text" name="titulo" placeholder="Buscar por título" value="{{ request.GET.titulo|default:'' }}">
+        <input class="filter__input" type="text" name="genero" placeholder="Buscar por categoría" value="{{ request.GET.genero|default:'' }}">
+        <button class="btn btn--primary btn--sm" type="submit">Buscar</button>
+        <a class="btn btn--outline btn--sm" href="{% url 'principal' %}">Quitar</a>
+    </form>
+
+    {% if libros %}
+        <div class="list">
+            {% for libro in libros %}
+                <a class="rowbook rowbook--link" href="{% url 'libro_detalle' libro.pk %}">
+                    <div class="rowbook__img">
+                        {% if libro.portada %}
+                            <img src="{{ libro.portada.url }}" alt="Portada de {{ libro.titulo }}">
+                        {% else %}
+                            <div class="rowbook__placeholder">Sin portada</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="rowbook__info">
+                        <div class="rowbook__title">{{ libro.titulo }}</div>
+                        <div class="muted small">{{ libro.autor }} · {{ libro.genero }}</div>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="muted">No hay libros para mostrar.</p>
+    {% endif %}
+
+{% else %}
+    <div class="card">
+        <h1>Bienvenido a BookFlare</h1>
+        <p class="muted">Inicia sesión para acceder a la plataforma.</p>
+
+        <div class="btns">
+            <a class="btn btn--primary" href="{% url 'login' %}">Entrar</a>
+            <a class="btn btn--outline" href="{% url 'register' %}">Registro</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
