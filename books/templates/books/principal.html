@@ -6,6 +6,15 @@
 
 <div style="margin-top:40px;">
 
+    <!-- BOTÓN DESTACADO RESEÑAS -->
+    <div style="text-align:center; margin-bottom:40px;">
+        <a href="{% url 'lista_resenas' %}"
+           class="btn btn--primary"
+           style="padding:10px 20px; font-weight:600;">
+            ⭐ Explorar reseñas
+        </a>
+    </div>
+
     {% if generos %}
 
         {% for genero, libros in generos.items %}

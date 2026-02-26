@@ -162,10 +162,11 @@ class LibroDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        # Reseñas del libro
+        libro = self.object
+        # RESEÑAS
         resenas = (
             Reseña.objects
-            .filter(libro=self.object)
+            .filter(libro=libro)
             .select_related("usuario")
             .order_by("-creada_en")
         )
@@ -173,17 +174,40 @@ class LibroDetailView(DetailView):
         context["resenas"] = resenas
         context["media_rating"] = resenas.aggregate(media=Avg("rating"))["media"]
 
-        # Préstamo activo del usuario
+        # INVENTARIO
+        inventario = Inventario.objects.filter(libro=libro).first()
+        context["inventario"] = inventario
+
+        # PRÉSTAMO ACTIVO
+        prestamo = None
         if self.request.user.is_authenticated:
             prestamo = Prestamo.objects.filter(
                 usuario=self.request.user,
-                inventario__libro=self.object,
+                inventario__libro=libro,
                 estado=Prestamo.Estado.ACTIVO
             ).first()
-        else:
-            prestamo = None
 
         context["prestamo"] = prestamo
+
+        # PUEDE RESEÑAR
+        puede_resenar = False
+
+        if self.request.user.is_authenticated:
+            ha_leido = Prestamo.objects.filter(
+                usuario=self.request.user,
+                inventario__libro=libro,
+                estado=Prestamo.Estado.FINALIZADO
+            ).exists()
+
+            ya_reseno = Reseña.objects.filter(
+                usuario=self.request.user,
+                libro=libro
+            ).exists()
+
+            if ha_leido and not ya_reseno:
+                puede_resenar = True
+
+        context["puede_resenar"] = puede_resenar
 
         return context
 
@@ -266,3 +290,116 @@ def stream_pdf(request, prestamo_id):
     response["Content-Disposition"] = 'inline; filename="libro.pdf"'
     response["Cache-Control"] = "no-store"
     return response
+
+class ResenaCreateView(LoginRequiredMixin, CreateView):
+    model = Reseña
+    form_class = ResenaForm
+    template_name = "books/resena_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.libro = get_object_or_404(Libro, isbn=self.kwargs["isbn"])
+
+        # verificar que ha tenido préstamo finalizado
+        ha_leido = Prestamo.objects.filter(
+            usuario=request.user,
+            inventario__libro=self.libro,
+            estado=Prestamo.Estado.FINALIZADO
+        ).exists()
+
+        if not ha_leido:
+            messages.error(request, "Debes haber leído el libro para reseñarlo.")
+            return redirect("libro_detalle", isbn=self.libro.isbn)
+
+        # verificar que no haya reseñado ya
+        if Reseña.objects.filter(usuario=request.user, libro=self.libro).exists():
+            messages.error(request, "Ya has reseñado este libro.")
+            return redirect("libro_detalle", isbn=self.libro.isbn)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.usuario = self.request.user
+        form.instance.libro = self.libro
+        messages.success(self.request, "Reseña publicada correctamente.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("libro_detalle", args=[self.libro.isbn])
+    
+@login_required
+def devolver_libro(request, prestamo_id):
+    prestamo = get_object_or_404(
+        Prestamo,
+        id=prestamo_id,
+        usuario=request.user,
+        estado=Prestamo.Estado.ACTIVO
+    )
+
+    prestamo.devolver()
+
+    messages.success(request, "Libro devuelto correctamente.")
+
+    return redirect("libro_detalle", isbn=prestamo.inventario.libro.isbn)
+
+class ResenaCreateView(LoginRequiredMixin, CreateView):
+    model = Reseña
+    form_class = ResenaForm
+    template_name = "books/resena_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        self.libro = get_object_or_404(Libro, isbn=self.kwargs["isbn"])
+
+        # Debe haber tenido préstamo finalizado
+        ha_leido = Prestamo.objects.filter(
+            usuario=request.user,
+            inventario__libro=self.libro,
+            estado=Prestamo.Estado.FINALIZADO
+        ).exists()
+
+        if not ha_leido:
+            messages.error(request, "Debes haber leído el libro para reseñarlo.")
+            return redirect("libro_detalle", isbn=self.libro.isbn)
+
+        # No puede reseñar dos veces
+        if Reseña.objects.filter(usuario=request.user, libro=self.libro).exists():
+            messages.error(request, "Ya has reseñado este libro.")
+            return redirect("libro_detalle", isbn=self.libro.isbn)
+
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.usuario = self.request.user
+        form.instance.libro = self.libro
+        messages.success(self.request, "Reseña publicada correctamente.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse("libro_detalle", args=[self.libro.isbn])
+    
+class ListaResenasView(ListView):
+    model = Reseña
+    template_name = "books/lista_resenas.html"
+    context_object_name = "resenas"
+    paginate_by = 10
+
+    def get_queryset(self):
+        queryset = (
+            Reseña.objects
+            .select_related("usuario", "libro")
+            .order_by("-creada_en")
+        )
+
+        titulo = self.request.GET.get("titulo")
+        genero = self.request.GET.get("genero")
+        ordenar = self.request.GET.get("ordenar")
+
+        if titulo:
+            queryset = queryset.filter(libro__titulo__icontains=titulo)
+
+        if genero:
+            queryset = queryset.filter(libro__genero__icontains=genero)
+
+        if ordenar == "mejor":
+            queryset = queryset.order_by("-rating", "-creada_en")
+
+        return queryset

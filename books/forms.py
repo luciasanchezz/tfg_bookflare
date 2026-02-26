@@ -74,13 +74,37 @@ class ResenaForm(forms.ModelForm):
         model = Reseña
         fields = ['rating', 'comentario']
         widgets = {
-            'rating': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': 1,
-                'max': 5
-            }),
+            # lo ocultamos, lo rellenará JS al pulsar estrella
+            'rating': forms.HiddenInput(),
             'comentario': forms.Textarea(attrs={
                 'rows': 3,
-                'class': 'form-control'
+                'class': 'form-control',
+                'placeholder': 'Escribe tu opinión (opcional)...'
             }),
         }
+
+    def clean_rating(self):
+        rating = self.cleaned_data.get("rating")
+        if not rating:
+            raise forms.ValidationError("Debes seleccionar una puntuación.")
+        return rating
+    
+
+class ResenaForm(forms.ModelForm):
+    class Meta:
+        model = Reseña
+        fields = ['rating', 'comentario']
+        widgets = {
+            'rating': forms.HiddenInput(),
+            'comentario': forms.Textarea(attrs={
+                'rows': 4,
+                'class': 'form-control',
+                'placeholder': 'Escribe tu opinión (opcional)...'
+            }),
+        }
+
+    def clean_rating(self):
+        rating = self.cleaned_data.get("rating")
+        if not rating:
+            raise forms.ValidationError("Debes seleccionar una puntuación.")
+        return rating

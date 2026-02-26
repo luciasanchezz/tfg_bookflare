@@ -11,52 +11,82 @@
 
     <nav class="navbar">
         <div class="container navbar__inner">
-            <!--logo que redirige al home-->
-            <a class="navbar__brand" href="{% url 'principal' %}">BookFlare</a>
 
+            <!-- LOGO -->
+            <a class="navbar__brand" href="{% url 'principal' %}">
+                BookFlare
+            </a>
+
+            <!-- MENÚ CENTRAL -->
             <ul class="navbar__menu">
+
                 <li class="navbar__item">
-                    <a class="navbar__link" href="#">Recomendaciones</a>
+                    <a class="navbar__link" href="{% url 'principal' %}">
+                        Inicio
+                    </a>
                 </li>
+
                 <li class="navbar__item separator">|</li>
+
                 <li class="navbar__item">
-                    <a class="navbar__link" href="#">Reseñas</a>
+                    <a class="navbar__link" href="{% url 'lista_resenas' %}">
+                        Reseñas
+                    </a>
                 </li>
+
             </ul>
 
-
+            <!-- ACCIONES DERECHA -->
             <div class="navbar__actions">
-                <!--botón para registrar libros (solo bibliotecarios)-->
-                <!-- {% if user.is_authenticated and user.es_bibliotecario %}
-                    <a class="btn btn--success btn--sm" href="{% url 'libro_crear' %}">Registrar libros</a>
-                {% endif %} -->
+
+                {% if user.is_authenticated and user.es_bibliotecario %}
+                    <a class="btn btn--success btn--sm" href="{% url 'libro_crear' %}">
+                        Registrar libro
+                    </a>
+                {% endif %}
 
                 {% if user.is_authenticated %}
-                    <span class="muted small">Hola, {{ user.username }}</span>
+                    <span class="muted small">
+                        Hola, {{ user.username }}
+                    </span>
 
-                    <!--logout en django 5 debe ser post-->
+                    <!-- Logout por POST (Django 5) -->
                     <form action="{% url 'logout' %}" method="post" class="inline">
                         {% csrf_token %}
-                        <button class="btn btn--outline-danger btn--sm" type="submit">Salir</button>
+                        <button class="btn btn--outline-danger btn--sm" type="submit">
+                            Salir
+                        </button>
                     </form>
+
                 {% else %}
-                    <a class="btn btn--outline btn--sm" href="{% url 'login' %}">Entrar</a>
-                    <a class="btn btn--primary btn--sm" href="{% url 'register' %}">Registro</a>
+                    <a class="btn btn--outline btn--sm" href="{% url 'login' %}">
+                        Entrar
+                    </a>
+
+                    <a class="btn btn--primary btn--sm" href="{% url 'register' %}">
+                        Registro
+                    </a>
                 {% endif %}
+
             </div>
+
         </div>
     </nav>
 
     <main class="container main">
+
         {% if messages %}
             <div class="messages">
                 {% for message in messages %}
-                    <div class="alert alert--{{ message.tags|default:'info' }}">{{ message }}</div>
+                    <div class="alert alert--{{ message.tags|default:'info' }}">
+                        {{ message }}
+                    </div>
                 {% endfor %}
             </div>
         {% endif %}
 
         {% block content %}{% endblock %}
+
     </main>
 
 </body>

@@ -17,6 +17,12 @@ urlpatterns = [
     path("leer/<str:isbn>/", views.leer_libro, name="leer_libro"),
     path("stream/pdf/<int:prestamo_id>/", views.stream_pdf, name="stream_pdf"),
 
+    path("libros/<str:isbn>/resena/", views.ResenaCreateView.as_view(), name="crear_resena"),
+    path("devolver/<int:prestamo_id>/", views.devolver_libro, name="devolver_libro"),
+
+    path("resenas/", views.ListaResenasView.as_view(), name="lista_resenas"),
+    path("libros/<str:isbn>/resena/", views.ResenaCreateView.as_view(), name="crear_resena"),
+
     path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(template_name="registration/logged_out.html"), name="logout"),
     path("register/", views.register, name="register"),

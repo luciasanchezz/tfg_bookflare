@@ -5,74 +5,104 @@
 
 <div style="max-width:1100px; margin:40px auto;">
 
-    <!-- CABECERA SUPERIOR -->
     <div style="display:grid; grid-template-columns:260px 1fr; gap:40px;">
 
-        <!-- PORTADA -->
         <div>
             {% if libro.portada %}
                 <img src="{{ libro.portada.url }}"
-                     style="width:100%; height:380px; object-fit:cover; border-radius:16px; box-shadow:0 12px 30px rgba(0,0,0,0.15);">
+                     style="width:100%; height:380px; object-fit:cover; border-radius:16px;">
             {% else %}
-                <div style="height:380px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border); border-radius:16px;">
+                <div style="height:380px; display:flex; align-items:center; justify-content:center; border:1px solid #ccc; border-radius:16px;">
                     Sin portada
                 </div>
             {% endif %}
         </div>
 
-        <!-- INFORMACIÓN PRINCIPAL -->
         <div>
 
-            <h1 style="margin-top:0;">{{ libro.titulo }}</h1>
-
-            <p class="muted" style="margin-bottom:10px;">
-                {{ libro.autor }}
-            </p>
+            <h1>{{ libro.titulo }}</h1>
+            <p>{{ libro.autor }}</p>
 
             {% if media_rating %}
-                <div style="margin-bottom:15px;">
-                    ⭐ <strong>{{ media_rating|floatformat:1 }}/5</strong>
-                </div>
+                <div>⭐ {{ media_rating|floatformat:1 }}/5</div>
             {% endif %}
 
-            <p style="line-height:1.6;">
-                {{ libro.descripcion }}
-            </p>
+            <p>{{ libro.descripcion }}</p>
 
-            <hr style="margin:25px 0;">
+            <hr>
 
-            <!-- FICHA TÉCNICA -->
-            <h3>Ficha técnica</h3>
-
-            <table style="width:100%; border-collapse:collapse;">
+            <table>
                 <tr>
-                    <td style="padding:6px 0; font-weight:600;">Género</td>
-                    <td style="padding:6px 0;">{{ libro.genero }}</td>
+                    <td><strong>Género</strong></td>
+                    <td>{{ libro.genero }}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px 0; font-weight:600;">Año</td>
-                    <td style="padding:6px 0;">{{ libro.anio }}</td>
+                    <td><strong>Año</strong></td>
+                    <td>{{ libro.anio }}</td>
                 </tr>
                 <tr>
-                    <td style="padding:6px 0; font-weight:600;">ISBN</td>
-                    <td style="padding:6px 0;">{{ libro.isbn }}</td>
+                    <td><strong>ISBN</strong></td>
+                    <td>{{ libro.isbn }}</td>
                 </tr>
             </table>
 
         </div>
     </div>
 
-    <!-- BLOQUE PRESTAMO -->
-    {% if prestamo %}
-        <div style="margin-top:40px; padding:20px; border-radius:16px; background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow);">
-            <h3 style="margin-top:0;">📖 Tu préstamo</h3>
+    <!-- BLOQUE PRÉSTAMO -->
+    {% if user.is_authenticated and not user.es_bibliotecario %}
 
-            <p><strong>Inicio:</strong> {{ prestamo.fecha_inicio|date:"d/m/Y" }}</p>
-            <p><strong>Vencimiento:</strong> {{ prestamo.fecha_vencimiento|date:"d/m/Y" }}</p>
-            <p><strong>Días restantes:</strong> {{ prestamo.dias_restantes }}</p>
+        {% if prestamo %}
 
-            <a href="{% url 'leer_libro' libro.isbn %}" class="btn btn--primary">
-                Leer libro
+            <div style="margin-top:40px; padding:20px; border:1px solid #ccc; border-radius:12px;">
+                <h3>📖 Tu préstamo</h3>
+
+                <p><strong>Inicio:</strong> {{ prestamo.fecha_inicio|date:"d/m/Y" }}</p>
+                <p><strong>Vencimiento:</strong> {{ prestamo.fecha_vencimiento|date:"d/m/Y" }}</p>
+                <p><strong>Días restantes:</strong> {{ prestamo.dias_restantes }}</p>
+
+                <div style="display:flex; gap:10px; margin-top:15px;">
+
+                    <a href="{% url 'leer_libro' libro.isbn %}" class="btn btn--primary">
+                        Leer libro
+                    </a>
+
+                    <a href="{% url 'devolver_libro' prestamo.id %}" 
+                       class="btn"
+                       style="background:#dc3545; color:white;">
+                        Devolver libro
+                    </a>
+
+                </div>
+            </div>
+
+        {% elif inventario %}
+
+            <div style="margin-top:40px; padding:20px; border:1px solid #ccc; border-radius:12px;">
+                <h3>📚 Disponibilidad</h3>
+
+                {% if inventario.hay_stock %}
+                    <p>Licencias disponibles: {{ inventario.licencias_disponibles }}</p>
+
+                    <a href="{% url 'prestar_libro' inventario.id %}" class="btn btn--primary">
+                        Solicitar préstamo
+                    </a>
+                {% else %}
+                    <p style="color:red;">
+                        No hay licencias disponibles.
+                    </p>
+                {% endif %}
+            </div>
+
+        {% endif %}
+
+    {% endif %}
+
+    <!-- BOTÓN RESEÑA -->
+    {% if puede_resenar %}
+        <div style="margin-top:30px;">
+            <a href="{% url 'crear_resena' libro.isbn %}" class="btn btn--primary">
+                Añadir reseña
             </a>
         </div>
     {% endif %}
@@ -83,15 +113,27 @@
 
         {% if resenas %}
             {% for r in resenas %}
-                <div style="margin-bottom:20px; padding:18px; border-radius:14px; background:var(--card); border:1px solid var(--border); box-shadow:var(--shadow);">
+                <div style="margin-bottom:20px; padding:15px; border:1px solid #ddd; border-radius:10px;">
                     <strong>{{ r.usuario.username }}</strong>
-                    <span class="muted small"> · {{ r.creada_en|date:"d/m/Y" }}</span>
-                    <div style="margin:6px 0;">⭐ {{ r.rating }}/5</div>
-                    <p style="margin:0;">{{ r.comentario }}</p>
+                    <span> · {{ r.creada_en|date:"d/m/Y" }}</span>
+
+                    <div>
+                        {% for i in "12345" %}
+                            {% if forloop.counter <= r.rating %}
+                                ⭐
+                            {% else %}
+                                ☆
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    {% if r.comentario %}
+                        <p>{{ r.comentario }}</p>
+                    {% endif %}
                 </div>
             {% endfor %}
         {% else %}
-            <p class="muted">No hay reseñas todavía.</p>
+            <p>No hay reseñas todavía.</p>
         {% endif %}
     </div>
 
