@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Mi perfil | BookFlare{% endblock %}
+
+{% block content %}
+
+<div style="max-width:900px; margin:40px auto;">
+
+    <h1>Mi perfil</h1>
+
+    <hr style="margin:30px 0;">
+
+    <!-- PRÉSTAMOS ACTIVOS -->
+    <h2>Préstamos activos</h2>
+
+    {% if prestamos_activos %}
+        {% for p in prestamos_activos %}
+            <div style="padding:15px; margin-bottom:10px; border:1px solid #ddd; border-radius:10px;">
+                <strong>{{ p.inventario.libro.titulo }}</strong><br>
+                Vence el {{ p.fecha_vencimiento|date:"d/m/Y" }}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No tienes préstamos activos.</p>
+    {% endif %}
+
+    <hr style="margin:30px 0;">
+
+    <!-- HISTORIAL -->
+    <h2>Historial de préstamos</h2>
+
+    {% if prestamos_finalizados %}
+        {% for p in prestamos_finalizados %}
+            <div style="padding:15px; margin-bottom:10px; border:1px solid #ddd; border-radius:10px;">
+                {{ p.inventario.libro.titulo }} — Devuelto el {{ p.fecha_devolucion|date:"d/m/Y" }}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No tienes historial de préstamos.</p>
+    {% endif %}
+
+    <hr style="margin:30px 0;">
+
+    <!-- RESEÑAS -->
+    <h2>Mis reseñas</h2>
+
+    {% if resenas %}
+        {% for r in resenas %}
+            <div style="padding:15px; margin-bottom:10px; border:1px solid #ddd; border-radius:10px;">
+                <strong>{{ r.libro.titulo }}</strong><br>
+                ⭐ {{ r.rating }}/5
+                {% if r.comentario %}
+                    <p>{{ r.comentario }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No has escrito reseñas.</p>
+    {% endif %}
+
+    <hr style="margin:40px 0;">
+
+    <!-- CERRAR SESIÓN -->
+    <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button class="btn btn--outline-danger">Cerrar sesión</button>
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Recomendaciones | BookFlare{% endblock %}
+
+{% block content %}
+
+<h1 class="page-title">Recomendaciones</h1>
+
+{% if libros %}
+
+<div class="recommendations">
+
+    {% for libro in libros %}
+
+    <div class="recommendation-card">
+
+        <div class="recommendation-cover">
+            {% if libro.portada %}
+                <img src="{{ libro.portada.url }}">
+            {% else %}
+                <div class="no-cover">Sin portada</div>
+            {% endif %}
+        </div>
+
+        <div class="recommendation-info">
+
+            <h2 class="recommendation-title">
+                <a href="{% url 'libro_detalle' libro.isbn %}">
+                    {{ libro.titulo }}
+                </a>
+            </h2>
+
+            <div class="muted small">
+                {{ libro.autor }} · {{ libro.genero }}
+            </div>
+
+            <!-- ⭐ ESTRELLAS SVG -->
+            <div class="stars-svg">
+
+                {% for i in "12345"|make_list %}
+                    {% if forloop.counter <= libro.estrellas_llenas %}
+                        <svg viewBox="0 0 24 24" class="star star--filled">
+                            <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.863 1.402-8.172L.132 9.21l8.2-1.192z"/>
+                        </svg>
+                    {% else %}
+                        <svg viewBox="0 0 24 24" class="star star--empty">
+                            <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.863 1.402-8.172L.132 9.21l8.2-1.192z"/>
+                        </svg>
+                    {% endif %}
+                {% endfor %}
+
+            </div>
+
+            <div class="muted small">
+                {{ libro.media_rating|floatformat:1 }} · {{ libro.total_resenas }} reseñas
+            </div>
+
+            <p class="recommendation-desc">
+                {{ libro.descripcion|truncatewords:25 }}
+            </p>
+
+        </div>
+
+    </div>
+
+    {% endfor %}
+
+</div>
+
+{% else %}
+
+<p class="muted">Aún no hay suficientes reseñas para generar recomendaciones.</p>
+
+{% endif %}
+
+{% endblock %}

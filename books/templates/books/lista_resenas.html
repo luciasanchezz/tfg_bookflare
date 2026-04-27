@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Reseñas | BookFlare{% endblock %}
+
+{% block content %}
+
+<h1 class="section-title">Reseñas</h1>
+
+<!-- 1️⃣ Agrupar por género -->
+{% regroup resenas by libro.genero as generos %}
+
+<div class="reviews-container">
+
+{% for genero in generos %}
+
+    <!-- TÍTULO GÉNERO -->
+    <h2 class="genre-title">{{ genero.grouper }}</h2>
+
+    <!-- 2️⃣ Ahora agrupamos por libro dentro del género -->
+    {% regroup genero.list by libro as libros %}
+
+    <div class="genre-section">
+
+    {% for grupo in libros %}
+
+        <a href="{% url 'libro_detalle' grupo.grouper.isbn %}" class="book-card-link">
+        <div class="book-card-review">
+
+            <!-- CABECERA LIBRO -->
+            <div class="book-card-header">
+
+                {% if grupo.grouper.portada %}
+                    <img src="{{ grupo.grouper.portada.url }}" class="book-card-img">
+                {% else %}
+                    <div class="book-card-img placeholder">
+                        Sin portada
+                    </div>
+                {% endif %}
+
+                <div class="book-card-info">
+                    <h3>{{ grupo.grouper.titulo }}</h3>
+                </div>
+
+            </div>
+
+            <!-- 3️⃣ Máximo 3 reseñas -->
+            <div class="reviews-list">
+
+                {% for r in grupo.list|slice:":3" %}
+                    <div class="review-box">
+                        <div class="review-top">
+                            <strong>{{ r.usuario.username }}</strong>
+                            <span class="review-rating">{{ r.rating }}⭐</span>
+                        </div>
+                        <p>{{ r.comentario|truncatechars:110 }}</p>
+
+                        {% if user.is_authenticated and user.es_bibliotecario %}
+                            <a href="{% url 'eliminar_resena' r.id %}" class="btn btn--outline-danger btn--sm">
+                                Eliminar
+                            </a>
+                        {% endif %}
+
+                    </div>
+                {% endfor %}
+
+                
+
+                <div class="review-footer">
+                    <span class="small muted">
+                        {{ grupo.list|length }} reseñas
+                    </span>
+
+                    <span class="ver-todas">
+                        Ver todas →
+                    </span>
+                </div>
+
+                
+
+            </div>
+
+        </div>
+        </a>
+
+    {% endfor %}
+
+    </div>
+
+{% empty %}
+    <p>No hay reseñas todavía.</p>
+{% endfor %}
+
+</div>
+
+{% endblock %}

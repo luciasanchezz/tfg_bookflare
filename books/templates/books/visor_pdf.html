@@ -13,7 +13,17 @@
     </div>
 
     <div class="pdfwrap">
-        <iframe class="pdf" src="{{ pdf_url }}" title="PDF {{ libro.titulo }}"></iframe>
+        <iframe
+            class="pdf"
+            src="{{ pdf_url }}#toolbar=0&navpanes=0"
+        ></iframe>
     </div>
 </div>
+
+<script>
+document.addEventListener("contextmenu", function(e) {
+    e.preventDefault();
+});
+</script>
+
 {% endblock %}

@@ -171,7 +171,7 @@ class Reseña(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(5)]
     )
     
-    comentario = models.TextField()
+    comentario = models.TextField(blank=True)
     creada_en = models.DateTimeField(auto_now_add=True)
 
     class Meta:

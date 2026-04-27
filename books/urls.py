@@ -22,6 +22,12 @@ urlpatterns = [
 
     path("resenas/", views.ListaResenasView.as_view(), name="lista_resenas"),
     path("libros/<str:isbn>/resena/", views.ResenaCreateView.as_view(), name="crear_resena"),
+    
+    path("resena/<int:pk>/eliminar/", views.eliminar_resena, name="eliminar_resena"),
+
+    path("recomendaciones/", views.RecomendacionesView.as_view(), name="recomendaciones"),
+
+    path("perfil/", views.perfil, name="perfil"),
 
     path("login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
     path("logout/", auth_views.LogoutView.as_view(template_name="registration/logged_out.html"), name="logout"),

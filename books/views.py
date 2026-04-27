@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import FileResponse
-from django.db.models import Sum, F
+from django.http import FileResponse, HttpResponseForbidden
+from django.db.models import Sum, F, Q
 from django.db.models.functions import Coalesce
 from django.views.generic import *
 from .models import *
@@ -12,25 +12,44 @@ from django.urls import reverse_lazy, reverse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_sameorigin
-from django.db.models import Avg
+from django.db.models import Avg, Count
 import os
 
 
 # HOME 
 def principal(request):
-    libros = Libro.objects.all().order_by("genero", "titulo")
 
+    query = request.GET.get("q", "")
+    genero = request.GET.get("genero", "")
+
+    libros = Libro.objects.all()
+
+    # 🔍 FILTRO POR TÍTULO
+    if query:
+        libros = libros.filter(
+            Q(titulo__icontains=query)
+        )
+
+    # 🏷 FILTRO POR GÉNERO
+    if genero:
+        libros = libros.filter(
+            Q(genero__icontains=genero)
+        )
+
+    # Agrupar por género
     generos = {}
     for libro in libros:
-        if libro.genero not in generos:
-            generos[libro.genero] = []
-        generos[libro.genero].append(libro)
+        generos.setdefault(libro.genero, []).append(libro)
 
-    return render(request, "books/principal.html", {
-        "generos": generos
-    })
+    context = {
+        "generos": generos,
+        "query": query,
+        "genero_seleccionado": genero,
+    }
 
-# CATÁLOGO (para usuarios autenticados)
+    return render(request, "books/principal.html", context)
+
+#CATÁLOGO(para usuarios autenticados)
 def catalogo(request):
     if not request.user.is_authenticated:
         return redirect("login")
@@ -132,10 +151,10 @@ class LibroCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
 
 class LibroUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Libro
-    form_class = LibroForm
+    fields = "__all__"
     template_name = "books/libro_form.html"
-    success_url = reverse_lazy("principal")
-    pk_url_kwarg = "isbn"
+    slug_field = "isbn"
+    slug_url_kwarg = "isbn"
 
     def test_func(self):
         return self.request.user.es_bibliotecario
@@ -145,13 +164,19 @@ class LibroDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Libro
     template_name = "books/libro_confirm_delete.html"
     success_url = reverse_lazy("principal")
-    pk_url_kwarg = "isbn"
+    slug_field = "isbn"
+    slug_url_kwarg = "isbn"
 
     def test_func(self):
         return self.request.user.es_bibliotecario
 
 
 # DETALLE LIBRO
+from django.db.models import Avg
+from django.views.generic import DetailView
+from .models import Libro, Reseña, Inventario, Prestamo
+
+
 class LibroDetailView(DetailView):
     model = Libro
     template_name = "books/libro_detail.html"
@@ -163,7 +188,11 @@ class LibroDetailView(DetailView):
         context = super().get_context_data(**kwargs)
 
         libro = self.object
+        user = self.request.user
+
+        # ======================
         # RESEÑAS
+        # ======================
         resenas = (
             Reseña.objects
             .filter(libro=libro)
@@ -174,33 +203,55 @@ class LibroDetailView(DetailView):
         context["resenas"] = resenas
         context["media_rating"] = resenas.aggregate(media=Avg("rating"))["media"]
 
+        # ======================
         # INVENTARIO
+        # ======================
         inventario = Inventario.objects.filter(libro=libro).first()
         context["inventario"] = inventario
 
-        # PRÉSTAMO ACTIVO
+        # ======================
+        # PRÉSTAMO ACTIVO DEL LIBRO
+        # ======================
         prestamo = None
-        if self.request.user.is_authenticated:
+        if user.is_authenticated:
             prestamo = Prestamo.objects.filter(
-                usuario=self.request.user,
+                usuario=user,
                 inventario__libro=libro,
                 estado=Prestamo.Estado.ACTIVO
             ).first()
 
         context["prestamo"] = prestamo
 
+        # ======================
+        # LÍMITE DE 3 PRÉSTAMOS
+        # ======================
+        puede_pedir = True
+
+        if user.is_authenticated:
+            prestamos_activos = Prestamo.objects.filter(
+                usuario=user,
+                estado=Prestamo.Estado.ACTIVO
+            ).count()
+
+            if prestamos_activos >= 3:
+                puede_pedir = False
+
+        context["puede_pedir"] = puede_pedir
+
+        # ======================
         # PUEDE RESEÑAR
+        # ======================
         puede_resenar = False
 
-        if self.request.user.is_authenticated:
+        if user.is_authenticated:
             ha_leido = Prestamo.objects.filter(
-                usuario=self.request.user,
+                usuario=user,
                 inventario__libro=libro,
                 estado=Prestamo.Estado.FINALIZADO
             ).exists()
 
             ya_reseno = Reseña.objects.filter(
-                usuario=self.request.user,
+                usuario=user,
                 libro=libro
             ).exists()
 
@@ -276,19 +327,22 @@ def leer_libro(request, isbn):
 @xframe_options_sameorigin
 @login_required
 def stream_pdf(request, prestamo_id):
+    prestamo = get_object_or_404(Prestamo, id=prestamo_id)
 
-    prestamo = get_object_or_404(
-        Prestamo,
-        id=prestamo_id,
-        usuario=request.user,
-        estado=Prestamo.Estado.ACTIVO,
+    # Solo el dueño del préstamo
+    if prestamo.usuario != request.user:
+        return HttpResponseForbidden()
+
+    # Solo si el préstamo está activo
+    if prestamo.estado != Prestamo.Estado.ACTIVO:
+        return HttpResponseForbidden()
+
+    response = FileResponse(
+        prestamo.inventario.libro.archivo_digital.open(),
+        content_type="application/pdf"
     )
 
-    archivo = prestamo.inventario.libro.archivo_digital
-
-    response = FileResponse(archivo.open("rb"), content_type="application/pdf")
-    response["Content-Disposition"] = 'inline; filename="libro.pdf"'
-    response["Cache-Control"] = "no-store"
+    response["Content-Disposition"] = "inline"
     return response
 
 class ResenaCreateView(LoginRequiredMixin, CreateView):
@@ -389,17 +443,77 @@ class ListaResenasView(ListView):
             .order_by("-creada_en")
         )
 
-        titulo = self.request.GET.get("titulo")
-        genero = self.request.GET.get("genero")
-        ordenar = self.request.GET.get("ordenar")
+        query = self.request.GET.get("q", "")
+        genero = self.request.GET.get("genero", "")
 
-        if titulo:
-            queryset = queryset.filter(libro__titulo__icontains=titulo)
+        if query:
+            queryset = queryset.filter(
+                Q(libro__titulo__icontains=query)
+            )
 
         if genero:
-            queryset = queryset.filter(libro__genero__icontains=genero)
-
-        if ordenar == "mejor":
-            queryset = queryset.order_by("-rating", "-creada_en")
+            queryset = queryset.filter(
+                Q(libro__genero__icontains=genero)
+            )
 
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["query"] = self.request.GET.get("q", "")
+        context["genero_seleccionado"] = self.request.GET.get("genero", "")
+        return context
+
+@login_required
+def eliminar_resena(request, pk):
+    resena = get_object_or_404(Reseña, pk=pk)
+
+    if not request.user.es_bibliotecario:
+        return HttpResponseForbidden()
+
+    resena.delete()
+    messages.success(request, "Reseña eliminada correctamente.")
+    return redirect("lista_resenas")
+
+@login_required
+def perfil(request):
+
+    prestamos_activos = request.user.prestamos.filter(
+        estado=Prestamo.Estado.ACTIVO
+    )
+
+    prestamos_finalizados = request.user.prestamos.filter(
+        estado=Prestamo.Estado.FINALIZADO
+    )
+
+    resenas = Reseña.objects.filter(
+        usuario=request.user
+    ).select_related("libro")
+
+    return render(request, "books/perfil.html", {
+        "prestamos_activos": prestamos_activos,
+        "prestamos_finalizados": prestamos_finalizados,
+        "resenas": resenas
+    })
+
+class RecomendacionesView(ListView):
+    model = Libro
+    template_name = "books/recomendaciones.html"
+    context_object_name = "libros"
+
+    def get_queryset(self):
+        libros = (
+            Libro.objects
+            .annotate(
+                media_rating=Avg("resenas__rating"),
+                total_resenas=Count("resenas")
+            )
+            .filter(total_resenas__gt=0)
+            .order_by("-media_rating")
+        )
+
+        for libro in libros:
+            libro.estrellas_llenas = int(libro.media_rating or 0)
+            libro.estrellas_vacias = 5 - libro.estrellas_llenas
+
+        return libros

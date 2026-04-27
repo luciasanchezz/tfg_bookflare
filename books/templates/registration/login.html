@@ -27,7 +27,14 @@
 
                 <div class="field">
                     <label for="{{ form.password.id_for_label }}">Contraseña</label>
-                    {{ form.password }}
+
+                    <div class="password-wrapper">
+                        {{ form.password }}
+                        <button type="button" class="toggle-password" onclick="togglePassword()">
+                            👁
+                        </button>
+                    </div>
+
                     {% for e in form.password.errors %}
                         <div class="field__error">{{ e }}</div>
                     {% endfor %}
@@ -37,9 +44,28 @@
             <button class="btn btn--primary btn--block" type="submit">Entrar</button>
         </form>
 
+        <p class="small">
+            <a href="{% url 'password_reset' %}" class="link">
+                ¿Olvidaste tu contraseña?
+            </a>
+        </p>
+
         <p class="auth__footer">
             ¿No tienes cuenta? <a class="link" href="{% url 'register' %}">Regístrate</a>
         </p>
     </div>
 </div>
+
+<script>
+function togglePassword() {
+    const input = document.getElementById("id_password");
+
+    if (input.type === "password") {
+        input.type = "text";
+    } else {
+        input.type = "password";
+    }
+}
+</script>
+
 {% endblock %}

@@ -10,7 +10,7 @@
         <div>
             {% if libro.portada %}
                 <img src="{{ libro.portada.url }}"
-                     style="width:100%; height:380px; object-fit:cover; border-radius:16px;">
+                    style="width:100%; height:380px; object-fit:cover; border-radius:16px;">
             {% else %}
                 <div style="height:380px; display:flex; align-items:center; justify-content:center; border:1px solid #ccc; border-radius:16px;">
                     Sin portada
@@ -21,13 +21,13 @@
         <div>
 
             <h1>{{ libro.titulo }}</h1>
-            <p>{{ libro.autor }}</p>
+            <p><b>Autor:</b> {{ libro.autor }}</p>
 
             {% if media_rating %}
                 <div>⭐ {{ media_rating|floatformat:1 }}/5</div>
             {% endif %}
 
-            <p>{{ libro.descripcion }}</p>
+            <p><b>Sinopsis:</b> {{ libro.descripcion }}</p>
 
             <hr>
 
@@ -44,6 +44,14 @@
                     <td><strong>ISBN</strong></td>
                     <td>{{ libro.isbn }}</td>
                 </tr>
+
+                {% if user.is_authenticated and user.es_bibliotecario %}
+                    <div class="admin-actions">
+                        <tr><a href="{% url 'libro_editar' libro.isbn %}" class="btn btn--outline btn--sm">Editar</a>
+                        <a href="{% url 'libro_eliminar' libro.isbn %}" class="btn btn--outline-danger btn--sm">Eliminar</a>
+                        </tr>
+                    </div>
+                {% endif %}
             </table>
 
         </div>
@@ -55,7 +63,7 @@
         {% if prestamo %}
 
             <div style="margin-top:40px; padding:20px; border:1px solid #ccc; border-radius:12px;">
-                <h3>📖 Tu préstamo</h3>
+                <h3>Tu préstamo</h3>
 
                 <p><strong>Inicio:</strong> {{ prestamo.fecha_inicio|date:"d/m/Y" }}</p>
                 <p><strong>Vencimiento:</strong> {{ prestamo.fecha_vencimiento|date:"d/m/Y" }}</p>
@@ -68,8 +76,8 @@
                     </a>
 
                     <a href="{% url 'devolver_libro' prestamo.id %}" 
-                       class="btn"
-                       style="background:#dc3545; color:white;">
+                        class="btn"
+                        style="background:#dc3545; color:white;">
                         Devolver libro
                     </a>
 
@@ -84,9 +92,16 @@
                 {% if inventario.hay_stock %}
                     <p>Licencias disponibles: {{ inventario.licencias_disponibles }}</p>
 
-                    <a href="{% url 'prestar_libro' inventario.id %}" class="btn btn--primary">
-                        Solicitar préstamo
-                    </a>
+                    {% if puede_pedir %}
+                        <a href="{% url 'prestar_libro' inventario.id %}" class="btn btn--primary">
+                            Solicitar préstamo
+                        </a>
+                    {% else %}
+                        <p class="muted small">
+                            Has alcanzado el máximo de 3 préstamos activos.
+                        </p>
+                    {% endif %}
+                    
                 {% else %}
                     <p style="color:red;">
                         No hay licencias disponibles.
@@ -94,11 +109,13 @@
                 {% endif %}
             </div>
 
+
+
         {% endif %}
 
     {% endif %}
 
-    <!-- BOTÓN RESEÑA -->
+    <!--añadir reseñas-->
     {% if puede_resenar %}
         <div style="margin-top:30px;">
             <a href="{% url 'crear_resena' libro.isbn %}" class="btn btn--primary">
@@ -107,7 +124,7 @@
         </div>
     {% endif %}
 
-    <!-- RESEÑAS -->
+    <!--reseñas-->
     <div style="margin-top:50px;">
         <h2>Reseñas</h2>
 

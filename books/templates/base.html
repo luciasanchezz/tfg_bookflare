@@ -20,11 +20,9 @@
             <!-- MENÚ CENTRAL -->
             <ul class="navbar__menu">
 
-                <li class="navbar__item">
-                    <a class="navbar__link" href="{% url 'principal' %}">
-                        Inicio
-                    </a>
-                </li>
+                <a class="navbar__link" href="{% url 'recomendaciones' %}">
+                Recomendaciones
+            </a>
 
                 <li class="navbar__item separator">|</li>
 
@@ -39,26 +37,18 @@
             <!-- ACCIONES DERECHA -->
             <div class="navbar__actions">
 
-                {% if user.is_authenticated and user.es_bibliotecario %}
-                    <a class="btn btn--success btn--sm" href="{% url 'libro_crear' %}">
-                        Registrar libro
-                    </a>
-                {% endif %}
-
                 {% if user.is_authenticated %}
+
                     <span class="muted small">
-                        Hola, {{ user.username }}
+                        {{ user.username }}
                     </span>
 
-                    <!-- Logout por POST (Django 5) -->
-                    <form action="{% url 'logout' %}" method="post" class="inline">
-                        {% csrf_token %}
-                        <button class="btn btn--outline-danger btn--sm" type="submit">
-                            Salir
-                        </button>
-                    </form>
+                    <a class="btn btn--outline btn--sm" href="{% url 'perfil' %}">
+                        Mi perfil
+                    </a>
 
                 {% else %}
+
                     <a class="btn btn--outline btn--sm" href="{% url 'login' %}">
                         Entrar
                     </a>
@@ -66,6 +56,7 @@
                     <a class="btn btn--primary btn--sm" href="{% url 'register' %}">
                         Registro
                     </a>
+
                 {% endif %}
 
             </div>
@@ -74,6 +65,9 @@
     </nav>
 
     <main class="container main">
+
+        
+
 
         {% if messages %}
             <div class="messages">
