@@ -5,14 +5,29 @@
 <div class="auth">
     <div class="auth__card">
         <h1 class="auth__title">Crear libro</h1>
-        <p class="auth__subtitle">Rellena los datos del libro y sube la portada/archivo digital.</p>
+        <p class="auth__subtitle">
+            Rellena los datos del libro y sube la portada/archivo digital.
+        </p>
 
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
+
             <div class="form">
                 {{ form.as_p }}
             </div>
-            <button class="btn btn--success btn--block" type="submit">Guardar</button>
+
+            <div style="display:flex; gap:12px; margin-top:20px;">
+                
+                <button class="btn btn--accent" type="submit">
+                    Guardar
+                </button>
+
+                <a href="{% url 'principal' %}" class="btn">
+                    Cancelar
+                </a>
+
+            </div>
+
         </form>
     </div>
 </div>

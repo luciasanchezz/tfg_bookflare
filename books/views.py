@@ -13,7 +13,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.utils import timezone
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.db.models import Avg, Count
-import os
 
 
 # HOME 
@@ -159,6 +158,9 @@ class LibroUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         return self.request.user.es_bibliotecario
 
+    def get_success_url(self):
+        return reverse("libro_detalle", args=[self.object.isbn])
+
 
 class LibroDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Libro
@@ -172,9 +174,7 @@ class LibroDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
 
 
 # DETALLE LIBRO
-from django.db.models import Avg
-from django.views.generic import DetailView
-from .models import Libro, Reseña, Inventario, Prestamo
+
 
 
 class LibroDetailView(DetailView):
@@ -394,41 +394,6 @@ def devolver_libro(request, prestamo_id):
     messages.success(request, "Libro devuelto correctamente.")
 
     return redirect("libro_detalle", isbn=prestamo.inventario.libro.isbn)
-
-class ResenaCreateView(LoginRequiredMixin, CreateView):
-    model = Reseña
-    form_class = ResenaForm
-    template_name = "books/resena_form.html"
-
-    def dispatch(self, request, *args, **kwargs):
-        self.libro = get_object_or_404(Libro, isbn=self.kwargs["isbn"])
-
-        # Debe haber tenido préstamo finalizado
-        ha_leido = Prestamo.objects.filter(
-            usuario=request.user,
-            inventario__libro=self.libro,
-            estado=Prestamo.Estado.FINALIZADO
-        ).exists()
-
-        if not ha_leido:
-            messages.error(request, "Debes haber leído el libro para reseñarlo.")
-            return redirect("libro_detalle", isbn=self.libro.isbn)
-
-        # No puede reseñar dos veces
-        if Reseña.objects.filter(usuario=request.user, libro=self.libro).exists():
-            messages.error(request, "Ya has reseñado este libro.")
-            return redirect("libro_detalle", isbn=self.libro.isbn)
-
-        return super().dispatch(request, *args, **kwargs)
-
-    def form_valid(self, form):
-        form.instance.usuario = self.request.user
-        form.instance.libro = self.libro
-        messages.success(self.request, "Reseña publicada correctamente.")
-        return super().form_valid(form)
-
-    def get_success_url(self):
-        return reverse("libro_detalle", args=[self.libro.isbn])
     
 class ListaResenasView(ListView):
     model = Reseña
@@ -472,7 +437,7 @@ def eliminar_resena(request, pk):
         return HttpResponseForbidden()
 
     resena.delete()
-    messages.success(request, "Reseña eliminada correctamente.")
+    messages.success(request, "Reseña eliminada correctamente.")    
     return redirect("lista_resenas")
 
 @login_required
