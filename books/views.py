@@ -474,7 +474,7 @@ class RecomendacionesView(ListView):
                 total_resenas=Count("resenas")
             )
             .filter(total_resenas__gt=0)
-            .order_by("-media_rating")
+            .order_by("genero", "-media_rating")
         )
 
         for libro in libros:

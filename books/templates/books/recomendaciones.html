@@ -7,64 +7,71 @@
 
 {% if libros %}
 
-<div class="recommendations">
+{% regroup libros by genero as libros_por_genero %}
 
-    {% for libro in libros %}
+{% for grupo in libros_por_genero %}
 
-    <div class="recommendation-card">
+    <div class="genre-section">
+        <h2 class="genre-title">{{ grupo.grouper }}</h2>
 
-        <div class="recommendation-cover">
-            {% if libro.portada %}
-                <img src="{{ libro.portada.url }}">
-            {% else %}
-                <div class="no-cover">Sin portada</div>
-            {% endif %}
-        </div>
+        <div class="recommendations">
 
-        <div class="recommendation-info">
+            {% for libro in grupo.list %}
 
-            <h2 class="recommendation-title">
-                <a href="{% url 'libro_detalle' libro.isbn %}">
-                    {{ libro.titulo }}
-                </a>
-            </h2>
+            <div class="recommendation-card">
 
-            <div class="muted small">
-                {{ libro.autor }} · {{ libro.genero }}
-            </div>
-
-            <!-- ⭐ ESTRELLAS SVG -->
-            <div class="stars-svg">
-
-                {% for i in "12345"|make_list %}
-                    {% if forloop.counter <= libro.estrellas_llenas %}
-                        <svg viewBox="0 0 24 24" class="star star--filled">
-                            <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.863 1.402-8.172L.132 9.21l8.2-1.192z"/>
-                        </svg>
+                <div class="recommendation-cover">
+                    {% if libro.portada %}
+                        <img src="{{ libro.portada.url }}">
                     {% else %}
-                        <svg viewBox="0 0 24 24" class="star star--empty">
-                            <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.863 1.402-8.172L.132 9.21l8.2-1.192z"/>
-                        </svg>
+                        <div class="no-cover">Sin portada</div>
                     {% endif %}
-                {% endfor %}
+                </div>
+
+                <div class="recommendation-info">
+
+                    <h2 class="recommendation-title">
+                        <a href="{% url 'libro_detalle' libro.isbn %}">
+                            {{ libro.titulo }}
+                        </a>
+                    </h2>
+
+                    <div class="muted small">
+                        {{ libro.autor }}
+                    </div>
+
+                    <div class="stars-svg">
+                        {% for i in "12345"|make_list %}
+                            {% if forloop.counter <= libro.estrellas_llenas %}
+                                <svg viewBox="0 0 24 24" class="star star--filled">
+                                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.863 1.402-8.172L.132 9.21l8.2-1.192z"/>
+                                </svg>
+                            {% else %}
+                                <svg viewBox="0 0 24 24" class="star star--empty">
+                                    <path d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.402 8.172L12 18.896l-7.336 3.863 1.402-8.172L.132 9.21l8.2-1.192z"/>
+                                </svg>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+
+                    <div class="muted small">
+                        {{ libro.media_rating|floatformat:1 }} · {{ libro.total_resenas }} reseñas
+                    </div>
+
+                    <p class="recommendation-desc">
+                        {{ libro.descripcion|truncatewords:25 }}
+                    </p>
+
+                </div>
 
             </div>
 
-            <div class="muted small">
-                {{ libro.media_rating|floatformat:1 }} · {{ libro.total_resenas }} reseñas
-            </div>
-
-            <p class="recommendation-desc">
-                {{ libro.descripcion|truncatewords:25 }}
-            </p>
+            {% endfor %}
 
         </div>
-
     </div>
 
-    {% endfor %}
-
-</div>
+{% endfor %}
 
 {% else %}
 
