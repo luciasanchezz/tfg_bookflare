@@ -653,3 +653,116 @@ body {
 .book-footer {
     margin-top: 8px !important;
 }
+
+
+
+
+/* ===== REVIEW CREATE PAGE ===== */
+
+.review-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 60px;
+}
+
+.review-card {
+    width: 600px;
+    padding: 40px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+}
+
+.review-title {
+    margin-bottom: 5px;
+}
+
+.star-container {
+    display: flex;
+    gap: 12px;
+    margin: 25px 0;
+    cursor: pointer;
+}
+
+.star-icon {
+    width: 40px;
+    height: 40px;
+    fill: #ddd;
+    transition: transform 0.2s ease, fill 0.2s ease;
+}
+
+.star-icon:hover {
+    transform: scale(1.2);
+}
+
+.star-selected {
+    fill: #b79b6c;
+}
+
+.review-textarea textarea {
+    width: 100%;
+    padding: 14px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+    font-family: inherit;
+    margin-bottom: 20px;
+    resize: vertical;
+}
+
+.review-textarea textarea:focus {
+    outline: none;
+    border-color: var(--earth-2);
+}
+
+.review-button {
+    width: 100%;
+    font-weight: 600;
+}
+
+.review-error {
+    color: #c55;
+    margin-bottom: 10px;
+}
+
+
+
+
+/* ===== RECOMENDACIONES AVANZADAS ===== */
+
+.recommendations-advanced {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+}
+
+.recommendation-card-advanced {
+    display: flex;
+    gap: 30px;
+    padding: 25px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: #faf8f5;
+    align-items: center;
+}
+
+.recommendation-cover-advanced img {
+    width: 130px;
+    border-radius: 8px;
+    border: 1px solid var(--line);
+}
+
+.recommendation-info-advanced {
+    flex: 1;
+}
+
+.recommendation-level {
+    display: inline-block;
+    background: var(--earth-2);
+    color: white;
+    font-size: 0.75rem;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}

@@ -1,2 +1,4 @@
-Django == 5.1.3
-Pillow 
+Django==5.1.3
+Pillow
+gunicorn
+whitenoise

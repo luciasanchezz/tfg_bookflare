@@ -3,38 +3,44 @@
 
 {% block content %}
 
-<div style="max-width:600px; margin:60px auto;">
+<div class="review-wrapper">
 
-    <h2>Valora el libro</h2>
+    <div class="review-card">
 
-    <form method="post">
-        {% csrf_token %}
+        <h2 class="review-title">Valora este libro</h2>
+        <p class="muted">Tu opinión ayuda a otros lectores</p>
 
-        {{ form.rating }}
+        <form method="post" class="review-form">
+            {% csrf_token %}
 
-        <!-- ESTRELLAS SVG -->
-        <div id="star-container" style="display:flex; gap:10px; cursor:pointer; margin:20px 0;">
-            {% for i in "12345" %}
-                <svg data-value="{{ i }}" width="45" height="45" viewBox="0 0 24 24" fill="#ccc">
-                    <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.848 1.48 8.246L12 18.897l-7.416 4.503 1.48-8.246L0 9.306l8.332-1.151z"/>
-                </svg>
-            {% endfor %}
-        </div>
+            {{ form.rating }}
 
-        {% if form.errors %}
-            <div style="color:red; margin-bottom:10px;">
-                {{ form.rating.errors }}
+            <!-- ESTRELLAS SVG -->
+            <div id="star-container" class="star-container">
+                {% for i in "12345" %}
+                    <svg data-value="{{ i }}" viewBox="0 0 24 24" class="star-icon">
+                        <path d="M12 .587l3.668 7.568 8.332 1.151-6.064 5.848 1.48 8.246L12 18.897l-7.416 4.503 1.48-8.246L0 9.306l8.332-1.151z"/>
+                    </svg>
+                {% endfor %}
             </div>
-        {% endif %}
 
-        <div>
-            {{ form.comentario }}
-        </div>
+            {% if form.errors %}
+                <div class="review-error">
+                    {{ form.rating.errors }}
+                </div>
+            {% endif %}
 
-        <button type="submit" class="btn btn--primary" style="margin-top:20px;">
-            Publicar reseña
-        </button>
-    </form>
+            <div class="review-textarea">
+                {{ form.comentario }}
+            </div>
+
+            <button type="submit" class="btn btn--accent review-button">
+                Publicar reseña
+            </button>
+
+        </form>
+
+    </div>
 
 </div>
 
@@ -48,7 +54,7 @@ stars.forEach(star => {
         ratingInput.value = value;
 
         stars.forEach(s => {
-            s.setAttribute("fill", s.dataset.value <= value ? "#f5b301" : "#ccc");
+            s.classList.toggle("star-selected", s.dataset.value <= value);
         });
     });
 });

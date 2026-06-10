@@ -6,11 +6,7 @@
 
 <div style="margin-top:40px;">
 
-    {% if user.is_authenticated and user.es_bibliotecario %}
-                    <a class="btn btn--success btn--sm" href="{% url 'libro_crear' %}">
-                        Registrar libro
-                    </a>
-                {% endif %}
+    
 
 <form method="get" class="search-bar">
 
@@ -35,7 +31,13 @@
     </button>
 
 </form>
-    
+
+    {% if user.is_authenticated and user.es_bibliotecario %}
+        <a class="btn btn--success btn--sm" href="{% url 'libro_crear' %}">
+            Registrar libro
+        </a>
+    {% endif %}
+        
     {% if generos %}
 
         {% for genero, libros in generos.items %}
@@ -58,8 +60,10 @@
                     display:flex;
                     gap:20px;
                     overflow-x:auto;
-                    padding-bottom:10px;
+                    padding:40px 40px 20px 40px;
                     scroll-behavior:smooth;
+                    position:relative;
+                    padding-bottom:10px;
                 ">
 
                     {% for libro in libros %}
@@ -70,10 +74,12 @@
                                 text-decoration:none;
                                 color:inherit;
                                 transition:transform 0.3s ease;
+                                position:relative;
+                                transform-origin:center center;
                             "
 
-                            onmouseover="this.style.transform='scale(1.08)'"
-                            onmouseout="this.style.transform='scale(1)'"
+                            onmouseover="this.style.transform='scale(1.08) translateY(-15px)'; this.style.zIndex='10';"
+                            onmouseout="this.style.transform='scale(1)'; this.style.zIndex='1';"
                         >
 
                             <!-- PORTADA -->

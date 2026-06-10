@@ -405,7 +405,7 @@ class ListaResenasView(ListView):
         queryset = (
             Reseña.objects
             .select_related("usuario", "libro")
-            .order_by("-creada_en")
+            .order_by("libro__genero", "libro__titulo", "-creada_en")
         )
 
         query = self.request.GET.get("q", "")
@@ -474,11 +474,21 @@ class RecomendacionesView(ListView):
                 total_resenas=Count("resenas")
             )
             .filter(total_resenas__gt=0)
-            .order_by("genero", "-media_rating")
+            .order_by("-media_rating", "-total_resenas")
         )
 
         for libro in libros:
             libro.estrellas_llenas = int(libro.media_rating or 0)
             libro.estrellas_vacias = 5 - libro.estrellas_llenas
+
+            # Clasificación automática
+            if libro.media_rating >= 4.5:
+                libro.nivel = "Excelente"
+            elif libro.media_rating >= 4:
+                libro.nivel = "Muy recomendado"
+            elif libro.media_rating >= 3:
+                libro.nivel = "Recomendado"
+            else:
+                libro.nivel = "Valoración moderada"
 
         return libros
