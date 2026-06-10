@@ -1,1 +1,19 @@
-/env
+# Entorno virtual
+env/
+venv/
+
+# Base de datos
+db.sqlite3
+
+# Media y archivos subidos
+media/
+
+# Archivos estáticos generados
+staticfiles/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Archivos del sistema
+.DS_Store
