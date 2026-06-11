@@ -324,6 +324,28 @@ def leer_libro(request, isbn):
 
 
 
+# STREAM PDF
+@xframe_options_sameorigin
+@login_required
+def stream_pdf(request, prestamo_id):
+    prestamo = get_object_or_404(Prestamo, id=prestamo_id)
+
+    # Solo el dueño del préstamo
+    if prestamo.usuario != request.user:
+        return HttpResponseForbidden()
+
+    # Solo si el préstamo está activo
+    if prestamo.estado != Prestamo.Estado.ACTIVO:
+        return HttpResponseForbidden()
+
+    response = FileResponse(
+        prestamo.inventario.libro.archivo_digital.open(),
+        content_type="application/pdf"
+    )
+
+    response["Content-Disposition"] = "inline"
+    return response
+
 class ResenaCreateView(LoginRequiredMixin, CreateView):
     model = Reseña
     form_class = ResenaForm
