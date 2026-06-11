@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
-from django.http import FileResponse, HttpResponseForbidden
+from django.http import FileResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.db.models import Sum, F, Q
 from django.db.models.functions import Coalesce
 from django.views.generic import *
@@ -494,3 +494,12 @@ class RecomendacionesView(ListView):
                 libro.nivel = "Valoración moderada"
 
         return libros
+
+
+def ver_portada(request, isbn):
+    libro = get_object_or_404(Libro, isbn=isbn)
+
+    if not libro.portada:
+        return HttpResponseNotFound()
+
+    return FileResponse(libro.portada.open(), content_type="image/jpeg")

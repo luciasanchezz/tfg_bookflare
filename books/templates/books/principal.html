@@ -84,7 +84,7 @@
 
                             <!-- PORTADA -->
                             {% if libro.portada %}
-                                <img src="{{ libro.portada.url }}"
+                                <img src="{% url 'ver_portada' libro.isbn %}"
                                     style="
                                         width:180px;
                                         height:260px;

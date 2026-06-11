@@ -16,6 +16,7 @@ urlpatterns = [
     path("prestar/<int:inventario_id>/", views.prestar_libro, name="prestar_libro"),
     path("leer/<str:isbn>/", views.leer_libro, name="leer_libro"),
     path("stream/pdf/<int:prestamo_id>/", views.stream_pdf, name="stream_pdf"),
+    path("portada/<str:isbn>/", views.ver_portada, name="ver_portada"),
 
     path("libros/<str:isbn>/resena/", views.ResenaCreateView.as_view(), name="crear_resena"),
     path("devolver/<int:prestamo_id>/", views.devolver_libro, name="devolver_libro"),
