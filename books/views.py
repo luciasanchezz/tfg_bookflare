@@ -15,6 +15,7 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.db.models import Avg, Count
 
 
+
 # HOME 
 def principal(request):
 
@@ -319,7 +320,7 @@ def leer_libro(request, isbn):
 
     return render(request, "books/visor_pdf.html", {
         "libro": libro,
-        "pdf_url": libro.archivo_digital.url,
+        "pdf_url": reverse("stream_pdf", args=[prestamo.id]),
     })
 
 

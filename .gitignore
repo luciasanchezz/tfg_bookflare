@@ -2,10 +2,6 @@
 env/
 venv/
 
-
-# Media y archivos subidos
-media/
-
 # Archivos estáticos generados
 staticfiles/
 
