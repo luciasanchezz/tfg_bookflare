@@ -2,8 +2,6 @@
 env/
 venv/
 
-# Base de datos
-db.sqlite3
 
 # Media y archivos subidos
 media/
