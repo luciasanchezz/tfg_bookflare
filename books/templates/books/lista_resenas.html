@@ -29,11 +29,11 @@
             <div class="book-card-header">
 
                 {% if grupo.grouper.portada %}
-                    <img src="{{ grupo.grouper.portada.url }}" class="book-card-img">
-                {% else %}
-                    <div class="book-card-img placeholder">
-                        Sin portada
-                    </div>
+                    <img src="{% url 'ver_portada' grupo.grouper.isbn %}" class="book-card-img">                
+                    {% else %}
+                        <div class="book-card-img placeholder">
+                            Sin portada
+                        </div>
                 {% endif %}
 
                 <div class="book-card-info">

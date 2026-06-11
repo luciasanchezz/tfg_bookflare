@@ -19,7 +19,7 @@ Selección automática basada en la valoración media de los lectores.
 
         <div class="recommendation-cover-advanced">
             {% if libro.portada %}
-                <img src="{{ libro.portada.url }}">
+                <img src="{% url 'ver_portada' libro.isbn %}">
             {% else %}
                 <div class="no-cover">Sin portada</div>
             {% endif %}
