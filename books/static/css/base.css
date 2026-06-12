@@ -497,3 +497,37 @@ body {
         height: 260px;
     }
 }
+
+/*estrellas reseñas*/
+
+.star-container {
+    display: flex;
+    gap: 8px;
+    margin: 20px 0;
+}
+
+.star-icon {
+    width: 40px;
+    height: 40px;
+    fill: #d8d8d8;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.star-icon:hover {
+    transform: scale(1.1);
+}
+
+.star-selected {
+    fill: #d4a017;
+}
+
+.review-error {
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+.review-textarea textarea {
+    width: 100%;
+    min-height: 120px;
+}
