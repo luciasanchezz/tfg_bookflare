@@ -15,28 +15,29 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.db.models import Avg, Count
 
 
-
-# HOME 
+#home principal donde se muestran los libros agrupados por genero
 def principal(request):
 
+    #recoge filtros del buscador
     query = request.GET.get("q", "")
     genero = request.GET.get("genero", "")
 
+    #empiezo cargando todos los libros
     libros = Libro.objects.all()
 
-    # 🔍 FILTRO POR TÍTULO
+    #filtro por titulo si el usuario escribe algo
     if query:
         libros = libros.filter(
-            Q(titulo__icontains=query)
+            Q(titulo__icontains=query)  #no distingue mayusculas
         )
 
-    # 🏷 FILTRO POR GÉNERO
+    #filtro por genero
     if genero:
         libros = libros.filter(
             Q(genero__icontains=genero)
         )
 
-    # Agrupar por género
+    #agrupo manualmente por genero para mostrar slider por categorias
     generos = {}
     for libro in libros:
         generos.setdefault(libro.genero, []).append(libro)
@@ -49,8 +50,11 @@ def principal(request):
 
     return render(request, "books/principal.html", context)
 
-#CATÁLOGO(para usuarios autenticados)
+
+#catalogo solo para usuarios autenticados
 def catalogo(request):
+
+    #si no esta logueado lo mando al login
     if not request.user.is_authenticated:
         return redirect("login")
 
@@ -59,6 +63,7 @@ def catalogo(request):
 
     libros = Libro.objects.order_by("titulo")
 
+    #aplico filtros si existen
     if titulo:
         libros = libros.filter(titulo__icontains=titulo)
 
@@ -68,14 +73,17 @@ def catalogo(request):
     return render(request, "books/principal.html", {"libros": libros})
 
 
-# FILTRAR (buscador para bibliotecarios)
+#buscador avanzado solo para bibliotecarios
 def filtrar_libros(request):
+
+    #compruebo que sea bibliotecario
     if not request.user.is_authenticated or not request.user.es_bibliotecario:
         return redirect("principal")
 
     titulo = request.GET.get("titulo", "").strip()
     genero = request.GET.get("genero", "").strip()
 
+    #anoto totales y ocupadas para calcular disponibles
     libros = (Libro.objects
         .annotate(
             licencias_totales=Coalesce(Sum("inventario_disponible__licencias_totales"), 0),
@@ -93,13 +101,17 @@ def filtrar_libros(request):
 
     return render(request, "books/principal.html", {"libros": libros})
 
-# REGISTRO
+
+#registro de usuario
 def register(request):
+
     if request.method == "POST":
         form = CustomUserCreationForm(request.POST)
+
+        #si el formulario es valido creo usuario
         if form.is_valid():
             user = form.save()
-            login(request, user)
+            login(request, user)  #lo logueo automaticamente
             messages.success(request, "Te has registrado correctamente.")
             return redirect("principal")
     else:
@@ -108,16 +120,19 @@ def register(request):
     return render(request, "books/register.html", {"form": form})
 
 
-# LISTA LIBROS
+#lista libros generica
 class ListaLibro(ListView):
     model = Libro
     template_name = "books/principal.html"
     context_object_name = "libros"
 
     def get_queryset(self):
+
+        #si no esta autenticado no muestro nada
         if not self.request.user.is_authenticated:
             return Libro.objects.none()
 
+        #si es bibliotecario muestro informacion ampliada
         if self.request.user.es_bibliotecario:
             return (
                 Libro.objects
@@ -138,17 +153,19 @@ class ListaLibro(ListView):
         return Libro.objects.all().order_by("titulo")
 
 
-# CRUD LIBROS (BIBLIOTECARIO)
+#crear libro solo bibliotecario
 class LibroCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Libro
     form_class = LibroForm
     template_name = "books/libro_form.html"
     success_url = reverse_lazy("principal")
 
+    #comprueba que sea bibliotecario
     def test_func(self):
         return self.request.user.es_bibliotecario
 
 
+#editar libro
 class LibroUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Libro
     fields = "__all__"
@@ -163,6 +180,7 @@ class LibroUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return reverse("libro_detalle", args=[self.object.isbn])
 
 
+#eliminar libro
 class LibroDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Libro
     template_name = "books/libro_confirm_delete.html"
@@ -174,10 +192,7 @@ class LibroDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user.es_bibliotecario
 
 
-# DETALLE LIBRO
-
-
-
+#detalle del libro
 class LibroDetailView(DetailView):
     model = Libro
     template_name = "books/libro_detail.html"
@@ -186,14 +201,13 @@ class LibroDetailView(DetailView):
     slug_url_kwarg = "isbn"
 
     def get_context_data(self, **kwargs):
+
         context = super().get_context_data(**kwargs)
 
         libro = self.object
         user = self.request.user
 
-        # ======================
-        # RESEÑAS
-        # ======================
+        #cargo reseñas ordenadas por fecha
         resenas = (
             Reseña.objects
             .filter(libro=libro)
@@ -204,15 +218,11 @@ class LibroDetailView(DetailView):
         context["resenas"] = resenas
         context["media_rating"] = resenas.aggregate(media=Avg("rating"))["media"]
 
-        # ======================
-        # INVENTARIO
-        # ======================
+        #cargo inventario del libro
         inventario = Inventario.objects.filter(libro=libro).first()
         context["inventario"] = inventario
 
-        # ======================
-        # PRÉSTAMO ACTIVO DEL LIBRO
-        # ======================
+        #compruebo si el usuario tiene prestamo activo
         prestamo = None
         if user.is_authenticated:
             prestamo = Prestamo.objects.filter(
@@ -223,11 +233,8 @@ class LibroDetailView(DetailView):
 
         context["prestamo"] = prestamo
 
-        # ======================
-        # LÍMITE DE 3 PRÉSTAMOS
-        # ======================
+        #control limite 3 prestamos
         puede_pedir = True
-
         if user.is_authenticated:
             prestamos_activos = Prestamo.objects.filter(
                 usuario=user,
@@ -239,9 +246,7 @@ class LibroDetailView(DetailView):
 
         context["puede_pedir"] = puede_pedir
 
-        # ======================
-        # PUEDE RESEÑAR
-        # ======================
+        #control si puede reseñar
         puede_resenar = False
 
         if user.is_authenticated:
@@ -264,25 +269,29 @@ class LibroDetailView(DetailView):
         return context
 
 
-# PRESTAR LIBRO
+#realiza prestamo
 @login_required
 def prestar_libro(request, inventario_id):
 
+    #bibliotecarios no pueden pedir libros
     if request.user.es_bibliotecario:
         messages.error(request, "Los bibliotecarios no pueden realizar préstamos.")
         return redirect("principal")
 
+    #maximo 3 prestamos
     if request.user.num_libros_activos >= 3:
         messages.error(request, "Has alcanzado el límite de 3 préstamos activos.")
         return redirect("principal")
 
     inventario = get_object_or_404(Inventario, id=inventario_id)
 
+    #comprueba stock
     if not inventario.hay_stock:
         messages.error(request, "No hay licencias disponibles.")
         return redirect("libro_detalle", isbn=inventario.libro.isbn)
 
     try:
+        #crea prestamo (la logica real esta en el modelo)
         Prestamo.objects.create(usuario=request.user, inventario=inventario)
     except ValueError as e:
         messages.error(request, str(e))
@@ -292,12 +301,13 @@ def prestar_libro(request, inventario_id):
     return redirect("libro_detalle", isbn=inventario.libro.isbn)
 
 
-# LEER LIBRO
+#leer libro protegido
 @login_required
 def leer_libro(request, isbn):
 
     libro = get_object_or_404(Libro, isbn=isbn)
 
+    #compruebo prestamo activo
     prestamo = Prestamo.objects.filter(
         usuario=request.user,
         inventario__libro=libro,
@@ -308,13 +318,14 @@ def leer_libro(request, isbn):
         messages.error(request, "Necesitas un préstamo activo.")
         return redirect("libro_detalle", isbn=isbn)
 
+    #si esta caducado lo devuelvo
     if prestamo.fecha_vencimiento < timezone.now():
         prestamo.devolver()
         messages.error(request, "Tu préstamo ha caducado.")
         return redirect("libro_detalle", isbn=isbn)
 
-    archivo = libro.archivo_digital
-    if not archivo:
+    #compruebo que exista archivo
+    if not libro.archivo_digital:
         messages.error(request, "Este libro no tiene archivo digital.")
         return redirect("libro_detalle", isbn=isbn)
 
@@ -324,38 +335,39 @@ def leer_libro(request, isbn):
     })
 
 
-
-# STREAM PDF
+#sirve el pdf protegido
 @xframe_options_sameorigin
 @login_required
 def stream_pdf(request, prestamo_id):
+
     prestamo = get_object_or_404(Prestamo, id=prestamo_id)
 
-    # Solo el dueño del préstamo
+    #solo el dueño puede acceder
     if prestamo.usuario != request.user:
         return HttpResponseForbidden()
 
-    # Solo si el préstamo está activo
+    #solo si esta activo
     if prestamo.estado != Prestamo.Estado.ACTIVO:
         return HttpResponseForbidden()
 
-    response = FileResponse(
+    return FileResponse(
         prestamo.inventario.libro.archivo_digital.open(),
         content_type="application/pdf"
     )
 
-    response["Content-Disposition"] = "inline"
-    return response
 
+#crear reseña
 class ResenaCreateView(LoginRequiredMixin, CreateView):
     model = Reseña
     form_class = ResenaForm
     template_name = "books/resena_form.html"
 
+    #antes de permitir crear compruebo condiciones
     def dispatch(self, request, *args, **kwargs):
+
         self.libro = get_object_or_404(Libro, isbn=self.kwargs["isbn"])
 
-        # verificar que ha tenido préstamo finalizado
+        #solo si ha tenido prestamo finalizado
         ha_leido = Prestamo.objects.filter(
             usuario=request.user,
             inventario__libro=self.libro,
@@ -366,13 +378,14 @@ class ResenaCreateView(LoginRequiredMixin, CreateView):
             messages.error(request, "Debes haber leído el libro para reseñarlo.")
             return redirect("libro_detalle", isbn=self.libro.isbn)
 
-        # verificar que no haya reseñado ya
+        #solo una reseña por libro
         if Reseña.objects.filter(usuario=request.user, libro=self.libro).exists():
             messages.error(request, "Ya has reseñado este libro.")
             return redirect("libro_detalle", isbn=self.libro.isbn)
 
         return super().dispatch(request, *args, **kwargs)
 
+    #guardo usuario y libro automaticamente
     def form_valid(self, form):
         form.instance.usuario = self.request.user
         form.instance.libro = self.libro
@@ -381,9 +394,12 @@ class ResenaCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self):
         return reverse("libro_detalle", args=[self.libro.isbn])
-    
+
+
+#devolver libro manualmente
 @login_required
 def devolver_libro(request, prestamo_id):
+
     prestamo = get_object_or_404(
         Prestamo,
         id=prestamo_id,
@@ -392,11 +408,12 @@ def devolver_libro(request, prestamo_id):
     )
 
     prestamo.devolver()
-
     messages.success(request, "Libro devuelto correctamente.")
 
     return redirect("libro_detalle", isbn=prestamo.inventario.libro.isbn)
-    
+
+
+#lista todas las reseñas
 class ListaResenasView(ListView):
     model = Reseña
     template_name = "books/lista_resenas.html"
@@ -404,6 +421,8 @@ class ListaResenasView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
+
+        #ordeno por genero, titulo y fecha
         queryset = (
             Reseña.objects
             .select_related("usuario", "libro")
@@ -431,8 +450,11 @@ class ListaResenasView(ListView):
         context["genero_seleccionado"] = self.request.GET.get("genero", "")
         return context
 
+
+#eliminar reseña solo bibliotecario
 @login_required
 def eliminar_resena(request, pk):
+
     resena = get_object_or_404(Reseña, pk=pk)
 
     if not request.user.es_bibliotecario:
@@ -442,6 +464,8 @@ def eliminar_resena(request, pk):
     messages.success(request, "Reseña eliminada correctamente.")    
     return redirect("lista_resenas")
 
+
+#perfil usuario
 @login_required
 def perfil(request):
 
@@ -463,12 +487,15 @@ def perfil(request):
         "resenas": resenas
     })
 
+
+#recomendaciones automaticas segun valoracion
 class RecomendacionesView(ListView):
     model = Libro
     template_name = "books/recomendaciones.html"
     context_object_name = "libros"
 
     def get_queryset(self):
+
         libros = (
             Libro.objects
             .annotate(
@@ -479,11 +506,12 @@ class RecomendacionesView(ListView):
             .order_by("-media_rating", "-total_resenas")
         )
 
+        #añado atributos para pintar estrellas y nivel
         for libro in libros:
+
             libro.estrellas_llenas = int(libro.media_rating or 0)
             libro.estrellas_vacias = 5 - libro.estrellas_llenas
 
-            # Clasificación automática
             if libro.media_rating >= 4.5:
                 libro.nivel = "Excelente"
             elif libro.media_rating >= 4:
@@ -496,7 +524,9 @@ class RecomendacionesView(ListView):
         return libros
 
 
+#sirve portada manualmente
 def ver_portada(request, isbn):
+
     libro = get_object_or_404(Libro, isbn=isbn)
 
     if not libro.portada:

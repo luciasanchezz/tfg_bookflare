@@ -3,15 +3,17 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import CustomUser, Libro, Inventario, Reseña
 
 
-#Formulario de registro
+#formulario de registro de usuario
 class CustomUserCreationForm(UserCreationForm):
 
+    #sobreescribo password1 para poder darle estilo
     password1 = forms.CharField(
         label="Contraseña",
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
         help_text="La contraseña debe cumplir los requisitos de seguridad."
     )
 
+    #confirmacion de contraseña
     password2 = forms.CharField(
         label="Repite la contraseña",
         widget=forms.PasswordInput(attrs={'class': 'form-control'}),
@@ -20,17 +22,24 @@ class CustomUserCreationForm(UserCreationForm):
 
     class Meta:
         model = CustomUser
+
+        #campos que quiero mostrar en el formulario
         fields = ("username", "email", "password1", "password2")
+
+        #aqui solo aplico clases css para que se vea mejor
         widgets = {
             'username': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
         }
 
 
-#Formulario de libro digital
+#formulario para crear o editar libro
 class LibroForm(forms.ModelForm):
+
     class Meta:
         model = Libro
+
+        #campos del modelo libro que permito editar
         fields = [
             'isbn',
             'titulo',
@@ -41,6 +50,8 @@ class LibroForm(forms.ModelForm):
             'portada',
             'archivo_digital'
         ]
+
+        #solo es para dar formato visual
         widgets = {
             'isbn': forms.TextInput(attrs={'class': 'form-control'}),
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
@@ -51,15 +62,22 @@ class LibroForm(forms.ModelForm):
         }
 
 
-#Formulario de inventario (licencias digitales)
-#no incluimos biblioteca porque se asigna automáticamente en la vista
+#formulario para definir numero de licencias digitales
+#no incluyo biblioteca porque se asigna desde la vista
 class InventarioForm(forms.ModelForm):
+
     class Meta:
         model = Inventario
+
+        #solo permito modificar licencias_totales
         fields = ['licencias_totales']
+
+        #mensaje informativo debajo del campo
         help_texts = {
             'licencias_totales': 'Número de licencias digitales disponibles en la biblioteca.',
         }
+
+        #minimo 1 licencia
         widgets = {
             'licencias_totales': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -68,34 +86,20 @@ class InventarioForm(forms.ModelForm):
         }
 
 
-#Formulario de reseña
+#formulario de reseña
 class ResenaForm(forms.ModelForm):
+
     class Meta:
         model = Reseña
-        fields = ['rating', 'comentario']
-        widgets = {
-            # lo ocultamos, lo rellenará JS al pulsar estrella
-            'rating': forms.HiddenInput(),
-            'comentario': forms.Textarea(attrs={
-                'rows': 3,
-                'class': 'form-control',
-                'placeholder': 'Escribe tu opinión (opcional)...'
-            }),
-        }
 
-    def clean_rating(self):
-        rating = self.cleaned_data.get("rating")
-        if not rating:
-            raise forms.ValidationError("Debes seleccionar una puntuación.")
-        return rating
-    
-
-class ResenaForm(forms.ModelForm):
-    class Meta:
-        model = Reseña
+        #solo rating y comentario
         fields = ['rating', 'comentario']
+
         widgets = {
+            #rating se oculta porque lo controlo con estrellas en js
             'rating': forms.HiddenInput(),
+
+            #textarea para opinion
             'comentario': forms.Textarea(attrs={
                 'rows': 4,
                 'class': 'form-control',
@@ -103,8 +107,13 @@ class ResenaForm(forms.ModelForm):
             }),
         }
 
+    #valido que el usuario haya elegido puntuacion
     def clean_rating(self):
+
         rating = self.cleaned_data.get("rating")
+
+        #si no hay valor lanzo error
         if not rating:
             raise forms.ValidationError("Debes seleccionar una puntuación.")
+
         return rating

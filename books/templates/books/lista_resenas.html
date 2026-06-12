@@ -49,7 +49,16 @@
                     <div class="review-box">
                         <div class="review-top">
                             <strong>{{ r.usuario.username }}</strong>
-                            <span class="review-rating">{{ r.rating }}⭐</span>
+
+                            <span class="review-rating">
+                                {% for i in "12345" %}
+                                    {% if forloop.counter <= r.rating %}
+                                        ★
+                                    {% else %}
+                                        ☆
+                                    {% endif %}
+                                {% endfor %}
+                            </span>
                         </div>
                         <p>{{ r.comentario|truncatechars:110 }}</p>
 

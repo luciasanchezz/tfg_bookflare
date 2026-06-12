@@ -1,28 +1,37 @@
 {% extends "base.html" %}
+
+<!--titulo dinamico-->
 {% block title %}{{ libro.titulo }} | BookFlare{% endblock %}
 
 {% block content %}
 
+<!--contenedor principal-->
 <div style="max-width:1100px; margin:40px auto;">
 
+    <!--grid portada + info-->
     <div style="display:grid; grid-template-columns:260px 1fr; gap:40px;">
 
+        <!--bloque portada-->
         <div>
             {% if libro.portada %}
+                <!--uso vista personalizada para servir imagen-->
                 <img src="{% url 'ver_portada' libro.isbn %}"
                     style="width:100%; height:380px; object-fit:cover; border-radius:16px;">
             {% else %}
+                <!--placeholder si no hay portada-->
                 <div style="height:380px; display:flex; align-items:center; justify-content:center; border:1px solid #ccc; border-radius:16px;">
                     Sin portada
                 </div>
             {% endif %}
         </div>
 
+        <!--bloque informacion libro-->
         <div>
 
             <h1>{{ libro.titulo }}</h1>
             <p><b>Autor:</b> {{ libro.autor }}</p>
 
+            <!--media de valoraciones-->
             {% if media_rating %}
                 <div>⭐ {{ media_rating|floatformat:1 }}/5</div>
             {% endif %}
@@ -31,6 +40,7 @@
 
             <hr>
 
+            <!--tabla datos tecnicos-->
             <table>
                 <tr>
                     <td><strong>Género</strong></td>
@@ -45,10 +55,12 @@
                     <td>{{ libro.isbn }}</td>
                 </tr>
 
+                <!--acciones solo bibliotecario-->
                 {% if user.is_authenticated and user.es_bibliotecario %}
                     <div class="admin-actions">
-                        <tr><a href="{% url 'libro_editar' libro.isbn %}" class="btn btn--outline btn--sm">Editar</a>
-                        <a href="{% url 'libro_eliminar' libro.isbn %}" class="btn btn--outline-danger btn--sm">Eliminar</a>
+                        <tr>
+                            <a href="{% url 'libro_editar' libro.isbn %}" class="btn btn--outline btn--sm">Editar</a>
+                            <a href="{% url 'libro_eliminar' libro.isbn %}" class="btn btn--outline-danger btn--sm">Eliminar</a>
                         </tr>
                     </div>
                 {% endif %}
@@ -57,11 +69,12 @@
         </div>
     </div>
 
-    <!-- BLOQUE PRÉSTAMO -->
+    <!--bloque prestamo-->
     {% if user.is_authenticated and not user.es_bibliotecario %}
 
         {% if prestamo %}
 
+            <!--si ya tiene prestamo activo-->
             <div style="margin-top:40px; padding:20px; border:1px solid #ccc; border-radius:12px;">
                 <h3>Tu préstamo</h3>
 
@@ -71,10 +84,12 @@
 
                 <div style="display:flex; gap:10px; margin-top:15px;">
 
+                    <!--acceso visor pdf-->
                     <a href="{% url 'leer_libro' libro.isbn %}" class="btn btn--primary">
                         Leer libro
                     </a>
 
+                    <!--devolver libro-->
                     <a href="{% url 'devolver_libro' prestamo.id %}" 
                         class="btn"
                         style="background:#dc3545; color:white;">
@@ -86,6 +101,7 @@
 
         {% elif inventario %}
 
+            <!--si no tiene prestamo-->
             <div style="margin-top:40px; padding:20px; border:1px solid #ccc; border-radius:12px;">
                 <h3>📚 Disponibilidad</h3>
 
@@ -93,47 +109,52 @@
                     <p>Licencias disponibles: {{ inventario.licencias_disponibles }}</p>
 
                     {% if puede_pedir %}
+                        <!--boton solicitar-->
                         <a href="{% url 'prestar_libro' inventario.id %}" class="btn btn--primary">
                             Solicitar préstamo
                         </a>
                     {% else %}
+                        <!--mensaje limite 3-->
                         <p class="muted small">
                             Has alcanzado el máximo de 3 préstamos activos.
                         </p>
                     {% endif %}
                     
                 {% else %}
+                    <!--sin stock-->
                     <p style="color:red;">
                         No hay licencias disponibles.
                     </p>
                 {% endif %}
             </div>
 
-
-
         {% endif %}
 
     {% endif %}
 
-    <!--añadir reseñas-->
+    <!--boton añadir reseña-->
     {% if puede_resenar %}
         <div style="margin-top:30px;">
+            <!--solo si ha leido y no ha reseñado-->
             <a href="{% url 'crear_resena' libro.isbn %}" class="btn btn--primary">
                 Añadir reseña
             </a>
         </div>
     {% endif %}
 
-    <!--reseñas-->
+    <!--bloque reseñas-->
     <div style="margin-top:50px;">
         <h2>Reseñas</h2>
 
         {% if resenas %}
             {% for r in resenas %}
                 <div style="margin-bottom:20px; padding:15px; border:1px solid #ddd; border-radius:10px;">
+                    
+                    <!--usuario y fecha-->
                     <strong>{{ r.usuario.username }}</strong>
                     <span> · {{ r.creada_en|date:"d/m/Y" }}</span>
 
+                    <!--estrellas-->
                     <div>
                         {% for i in "12345" %}
                             {% if forloop.counter <= r.rating %}
@@ -144,12 +165,14 @@
                         {% endfor %}
                     </div>
 
+                    <!--comentario si existe-->
                     {% if r.comentario %}
                         <p>{{ r.comentario }}</p>
                     {% endif %}
                 </div>
             {% endfor %}
         {% else %}
+            <!--si no hay reseñas-->
             <p>No hay reseñas todavía.</p>
         {% endif %}
     </div>

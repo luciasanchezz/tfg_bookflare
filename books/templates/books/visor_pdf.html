@@ -1,29 +1,48 @@
 {% extends "base.html" %}
+
+<!--titulo segun libro-->
 {% block title %}Leer | {{ libro.titulo }}{% endblock %}
 
 {% block content %}
+
 <div class="reader">
+
+    <!--cabecera con informacion del libro-->
     <div class="reader__head">
         <div>
+            <!--titulo principal-->
             <h1 class="reader__title">{{ libro.titulo }}</h1>
-            <p class="muted">{{ libro.autor }} · {{ libro.genero }} · {{ libro.anio }}</p>
+
+            <!--datos basicos del libro-->
+            <p class="muted">
+                {{ libro.autor }} · {{ libro.genero }} · {{ libro.anio }}
+            </p>
         </div>
 
-        <a class="btn btn--outline btn--sm" href="{% url 'libro_detalle' libro.pk %}">Volver</a>
+        <!-- boton para volver al detalle-->
+        <a class="btn btn--outline btn--sm" href="{% url 'libro_detalle' libro.pk %}">
+            Volver
+        </a>
     </div>
 
+    <!--contenedor del pdf -->
     <div class="pdfwrap">
+
+        <!--iframe que carga el pdf protegido desde la vista stream_pdf-->
+        <!--toolbar=0 oculta herramientas basicas del visor-->
         <iframe
             class="pdf"
             src="{{ pdf_url }}#toolbar=0&navpanes=0"
         ></iframe>
+
     </div>
 </div>
 
 <script>
-document.addEventListener("contextmenu", function(e) {
-    e.preventDefault();
-});
+    //bloqueo clic derecho para evitar descarga facil
+    document.addEventListener("contextmenu", function(e) {
+        e.preventDefault();
+    });
 </script>
 
 {% endblock %}

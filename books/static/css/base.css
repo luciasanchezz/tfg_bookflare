@@ -324,8 +324,10 @@ body {
 }
 
 .review-rating {
-    color: #8c7c6d;
-    font-size: 0.8rem;
+    color: var(--earth-2);
+    font-size: 1rem;
+    letter-spacing: 2px;
+    font-weight: bold;
 }
 
 .review-box p {

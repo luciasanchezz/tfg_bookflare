@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-&k_@l&#j84(=r4^f^mc2jz6ng_+@klli!ehzyt=s#451xtgu!s
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False 
 
-ALLOWED_HOSTS = ["bookflare.onrender.com"]
+ALLOWED_HOSTS = ["bookflare.onrender.com", "127.0.0.1", "localhost"]
 CSRF_TRUSTED_ORIGINS = ["https://bookflare.onrender.com"]
 
 # Application definition
